@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, HelpCircle } from "lucide-react";
 import { containsSpam } from "@/lib/filter";
+import QuestionItem from "./QuestionItem";
+import { motion, AnimatePresence } from "framer-motion";
 
 const QUESTION_CATEGORIES = [
     "Problem Clarity",
@@ -19,6 +21,28 @@ const QUESTION_CATEGORIES = [
     "Business Model",
     "Risks"
 ];
+
+const generateAvatarGradient = (userId: string) => {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c1 = `hsl(${Math.abs(hash) % 360}, 70%, 60%)`;
+    const c2 = `hsl(${(Math.abs(hash) + 40) % 360}, 70%, 40%)`;
+    return `linear-gradient(135deg, ${c1}, ${c2})`;
+};
+
+const formatTimeAgo = (timestamp: any) => {
+    if (!timestamp) return 'Just now';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+};
 
 interface Comment {
     id: string;
@@ -170,14 +194,18 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                     )}
 
                     <div className="space-y-4">
-                        {questions.map(q => (
-                            <div key={q.id} className="p-8 bg-[#121218] border border-white/[0.04] shadow-xl rounded-[32px]">
-                                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 mb-4 inline-block">
-                                    {q.category}
-                                </span>
-                                <p className="text-white text-lg font-medium leading-relaxed">{q.question}</p>
-                            </div>
+                        <AnimatePresence>
+                        {questions.map((q, i) => (
+                            <motion.div 
+                                key={q.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: Math.min(i * 0.1, 0.5) }}
+                            >
+                                <QuestionItem question={q} />
+                            </motion.div>
                         ))}
+                        </AnimatePresence>
                         {questions.length === 0 && (
                             <div className="text-center py-12 text-zinc-500">No questions yet. Be the first to ask!</div>
                         )}
@@ -212,11 +240,29 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                     )}
 
                     <div className="space-y-4">
-                        {comments.map(c => (
-                            <div key={c.id} className="p-8 bg-[#121218] border border-white/[0.04] shadow-xl rounded-[32px]">
+                        <AnimatePresence>
+                        {comments.map((c, i) => (
+                            <motion.div 
+                                key={c.id} 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: Math.min(i * 0.1, 0.5) }}
+                                className="p-6 sm:p-8 bg-[#121218] border border-white/[0.04] shadow-xl rounded-[32px] hover:border-white/10 transition-colors"
+                            >
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className="w-10 h-10 rounded-full shadow-inner" style={{ background: generateAvatarGradient(c.userId) }} />
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-zinc-200 font-bold text-sm">Builder {c.userId.substring(0,4)}</span>
+                                            <span className="text-zinc-600 text-xs">•</span>
+                                            <span className="text-zinc-500 text-xs font-medium">{formatTimeAgo(c.createdAt)}</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 <p className="text-zinc-300 leading-relaxed text-lg">{c.text}</p>
-                            </div>
+                            </motion.div>
                         ))}
+                        </AnimatePresence>
                         {comments.length === 0 && (
                             <div className="text-center py-12 text-zinc-500">No comments yet. Start the discussion!</div>
                         )}

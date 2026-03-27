@@ -13,6 +13,8 @@ interface Idea {
     idea: string;
     category: string;
     userId: string;
+    likesCount?: number;
+    views?: number;
 }
 
 interface SwipeCardProps {
@@ -66,11 +68,21 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                         {idea.category}
                     </span>
-                    <Link href={`/idea/${idea.id}`} target="_blank">
-                        <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white">
-                            <ExternalLink className="w-5 h-5" />
-                        </Button>
-                    </Link>
+                    <div className="flex items-center space-x-3 text-zinc-400 text-sm font-medium">
+                        <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
+                            <Heart className="w-3.5 h-3.5 mr-1 text-red-400" />
+                            {idea.likesCount || 0}
+                        </div>
+                        <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
+                            <span className="mr-1 text-zinc-300">👁️</span>
+                            {idea.views || 0}
+                        </div>
+                        <Link href={`/idea/${idea.id}`} target="_blank">
+                            <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white h-7 w-7 rounded-full ml-1">
+                                <ExternalLink className="w-4 h-4" />
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <h2 className="text-3xl font-bold text-white leading-tight">

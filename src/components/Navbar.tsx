@@ -23,6 +23,11 @@ export default function Navbar() {
                     <div className="flex items-center space-x-3">
                         {user ? (
                             <>
+                                <Link href="/leaderboard" className="hidden sm:block">
+                                    <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
+                                        Leaderboard
+                                    </Button>
+                                </Link>
                                 <Link href="/saved">
                                     <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
                                         Saved
@@ -39,6 +44,11 @@ export default function Navbar() {
                             </>
                         ) : (
                             <>
+                                <Link href="/leaderboard" className="hidden sm:block">
+                                    <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
+                                        Leaderboard
+                                    </Button>
+                                </Link>
                                 <Link href="/login">
                                     <Button variant="ghost" className="text-zinc-300 hover:text-white rounded-full px-5 h-10 font-medium">
                                         Log In

@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, Lock, User, CheckCircle2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SignupPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [country, setCountry] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -39,6 +41,8 @@ export default function SignupPage() {
                 id: user.uid,
                 name,
                 email,
+                country: country || "Unknown",
+                totalLikes: 0,
                 createdAt: serverTimestamp(),
             });
 
@@ -139,6 +143,23 @@ export default function SignupPage() {
                                         className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-white rounded-xl focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-zinc-300 font-medium ml-1">Country</Label>
+                                <Select value={country} onValueChange={(val) => setCountry(val || "")}>
+                                    <SelectTrigger className="w-full h-12 bg-zinc-950/50 border-zinc-800 text-white rounded-xl focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all">
+                                        <SelectValue placeholder="Select your country" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                        <SelectItem value="United States">United States</SelectItem>
+                                        <SelectItem value="India">India</SelectItem>
+                                        <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                                        <SelectItem value="Canada">Canada</SelectItem>
+                                        <SelectItem value="Australia">Australia</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="space-y-2">

@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bookmark, ExternalLink } from "lucide-react";
+import { Bookmark, ExternalLink, Heart, User } from "lucide-react";
 
 interface Idea {
     id: string;
@@ -18,6 +18,7 @@ interface Idea {
 export default function SavedIdeasPage() {
     const { user, loading } = useAuth();
     const [savedIdeas, setSavedIdeas] = useState<Idea[]>([]);
+    const [userData, setUserData] = useState<any>(null);
     const [fetching, setFetching] = useState(true);
 
     useEffect(() => {
@@ -28,6 +29,13 @@ export default function SavedIdeasPage() {
 
         const fetchSaved = async () => {
             try {
+                // Fetch user data for total likes
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    setUserData(userDocSnap.data());
+                }
+
                 const q = query(
                     collection(db, "savedIdeas"),
                     where("userId", "==", user.uid),
@@ -84,14 +92,31 @@ export default function SavedIdeasPage() {
     return (
         <div className="flex-1 overflow-y-auto bg-[#0B0B0F] px-4 py-8 relative">
             <div className="max-w-5xl mx-auto space-y-8">
-                <div className="flex items-center mb-8">
-                    <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mr-4">
-                        <Bookmark className="w-6 h-6 text-purple-400" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
+                    <div className="flex items-center">
+                        <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mr-4">
+                            <Bookmark className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-white tracking-tight">Saved Ideas</h1>
+                            <p className="text-zinc-400 mt-1">Ideas you swiped right on.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-extrabold text-white tracking-tight">Saved Ideas</h1>
-                        <p className="text-zinc-400 mt-1">Ideas you swiped right on.</p>
-                    </div>
+
+                    {userData && (
+                        <div className="flex items-center space-x-4 bg-[#121218] border border-white/[0.04] p-4 rounded-[24px]">
+                            <div className="flex items-center text-zinc-300">
+                                <User className="w-5 h-5 mr-2 text-blue-400" />
+                                <span className="font-semibold">{userData.name || "User"}</span>
+                            </div>
+                            <div className="w-px h-6 bg-white/[0.1]"></div>
+                            <div className="flex items-center text-zinc-300">
+                                <Heart className="w-5 h-5 mr-2 text-red-500 fill-current" />
+                                <span className="font-bold">{userData.totalLikes || 0}</span>
+                                <span className="ml-1 text-sm text-zinc-500">Total Likes</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {savedIdeas.length === 0 ? (
