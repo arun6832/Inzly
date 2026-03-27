@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
     };
 
     return (
-        <div className="flex-1 overflow-y-auto bg-[#0B0B0F] scroll-smooth px-4 py-8">
+        <div className="flex-1 min-h-screen bg-[#0B0B0F] px-4 py-8">
             <div className="max-w-4xl mx-auto space-y-12">
                 {/* Header */}
                 <div className="text-center space-y-4 pt-4">

@@ -1,20 +1,30 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "./ui/button";
 
 export default function Navbar() {
     const { user, signOut } = useAuth();
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener("scroll", handleScroll);
+        // Initial check
+        handleScroll();
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
-        <nav className="w-full bg-[#0B0B0F]/80 backdrop-blur-md border-b border-white/[0.04] sticky top-0 z-50">
+        <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.04]" : "bg-transparent"}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
+                <div className={`flex justify-between items-center transition-all duration-300 ${scrolled ? "h-14" : "h-20"}`}>
                     <Link href="/" className="flex items-center space-x-3 group">
-                        <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-[0_4px_20px_rgb(79,70,229,0.3)] group-hover:scale-105 transition-transform">
-                            I
-                        </div>
+                        <img src="/images/inzly-logo.png" alt="Inzly" className="w-10 h-10 rounded-xl object-cover group-hover:scale-105 transition-transform" />
                         <span className="text-2xl font-black tracking-tight text-white hidden sm:block">
                             inzly
                         </span>

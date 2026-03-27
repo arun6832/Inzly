@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import Link from "next/link";
@@ -36,6 +36,9 @@ export default function SignupPage() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            // Send email verification link (free via Firebase)
+            await sendEmailVerification(user);
+
             // Save additional user defaults to Firestore
             await setDoc(doc(db, "users", user.uid), {
                 id: user.uid,
@@ -43,6 +46,7 @@ export default function SignupPage() {
                 email,
                 country: country || "Unknown",
                 totalLikes: 0,
+                emailVerified: false,
                 createdAt: serverTimestamp(),
             });
 
@@ -52,7 +56,7 @@ export default function SignupPage() {
             // Delay redirect slightly for UX so they can read the success message
             setTimeout(() => {
                 window.location.href = "/";
-            }, 1000);
+            }, 2500);
 
         } catch (err: any) {
             setError(err.message || "Failed to create an account.");
@@ -77,7 +81,8 @@ export default function SignupPage() {
                         <CheckCircle2 className="w-10 h-10 text-green-500" />
                     </motion.div>
                     <h2 className="text-2xl font-bold text-white">Account Created!</h2>
-                    <p className="text-zinc-400">Taking you to the feed...</p>
+                    <p className="text-zinc-400 leading-relaxed">A verification link has been sent to <span className="text-white font-medium">{email}</span>. Please check your inbox.</p>
+                    <p className="text-zinc-500 text-sm">Redirecting you to the feed...</p>
                 </motion.div>
             </div>
         );

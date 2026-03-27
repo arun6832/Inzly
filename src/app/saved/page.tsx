@@ -90,7 +90,7 @@ export default function SavedIdeasPage() {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto bg-[#0B0B0F] px-4 py-8 relative">
+        <div className="flex-1 overflow-x-hidden min-h-screen bg-[#0B0B0F] px-4 py-8 relative">
             <div className="max-w-5xl mx-auto space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
                     <div className="flex items-center">

@@ -174,7 +174,7 @@ export default function IdeaDetailPage() {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto bg-[#0B0B0F] scroll-smooth">
+        <div className="flex-1 min-h-screen bg-[#0B0B0F]">
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">

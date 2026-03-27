@@ -20,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="antialiased dark">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-[#0B0B0F] text-zinc-100 selection:bg-blue-500/30`}>
+    <html lang="en" className="antialiased dark hide-scrollbar">
+      <body className={`${inter.className} min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-indigo-500/30 hide-scrollbar`}>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 flex flex-col relative w-full overflow-hidden">
+          <main className="flex-1 w-full relative">
             {children}
           </main>
         </AuthProvider>

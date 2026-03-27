@@ -85,7 +85,7 @@ export default function CreateIdeaPage() {
     };
 
     return (
-        <div className="flex-1 flex items-center justify-center p-4 py-8 overflow-y-auto bg-[#0B0B0F]">
+        <div className="flex-1 flex items-center justify-center p-4 py-8 min-h-screen overflow-x-hidden bg-[#0B0B0F]">
             <div className="w-full max-w-2xl space-y-8 bg-[#121218] p-8 sm:p-10 rounded-[32px] border border-white/[0.04] shadow-2xl relative">
                 <div className="text-center">
                     <h2 className="text-3xl font-extrabold tracking-tight text-white mb-2">Post a New Idea</h2>
