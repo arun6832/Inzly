@@ -4,15 +4,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, doc, setDoc, Timestamp } from "firebase/firestore";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBeRACMKRLcEkme0IBdzDSI7SiIi0HK0W4",
-    authDomain: "inzly-3518e.firebaseapp.com",
-    projectId: "inzly-3518e",
-    storageBucket: "inzly-3518e.firebasestorage.app",
-    messagingSenderId: "257986504746",
-    appId: "1:257986504746:web:7d7641c9130d8ac9ab7b53"
-};
+import { firebaseConfig } from "./credentials.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
