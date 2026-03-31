@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-indigo-500/30 hide-scrollbar`}>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full relative">
+          <main className="flex-1 w-full relative flex flex-col">
             {children}
           </main>
         </AuthProvider>

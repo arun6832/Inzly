@@ -61,8 +61,9 @@ function ResetPasswordForm() {
         try {
             await confirmPasswordReset(auth, oobCode, newPassword);
             setSuccess(true);
-        } catch (err: any) {
-            setError(err.message || "Failed to reset password. The link may have expired.");
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || "Failed to reset password. The link may have expired.");
         } finally {
             setLoading(false);
         }

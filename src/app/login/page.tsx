@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,8 +25,9 @@ export default function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             // Force a hard redirect so user immediately feels logged in and page re-evaluates auth state immediately
             window.location.href = "/";
-        } catch (err: any) {
-            setError(err.message || "Failed to login. Please check your credentials.");
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || "Failed to login. Please check your credentials.");
             setLoading(false);
         }
     };
@@ -115,7 +114,7 @@ export default function LoginPage() {
 
                     <div className="mt-8 text-center">
                         <p className="text-zinc-400">
-                            Don't have an account?{" "}
+                            Don&apos;t have an account?{" "}
                             <Link href="/signup" className="text-white hover:text-blue-400 font-semibold transition-colors">
                                 Sign up for free
                             </Link>

@@ -24,11 +24,12 @@ export default function ForgotPasswordPage() {
         try {
             await sendPasswordResetEmail(auth, email);
             setSent(true);
-        } catch (err: any) {
-            if (err.code === "auth/user-not-found") {
+        } catch (err) {
+            const e = err as { code?: string; message?: string };
+            if (e.code === "auth/user-not-found") {
                 setError("No account found with this email address.");
             } else {
-                setError(err.message || "Failed to send reset email.");
+                setError(e.message || "Failed to send reset email.");
             }
         } finally {
             setLoading(false);
@@ -56,10 +57,10 @@ export default function ForgotPasswordPage() {
                         </motion.div>
                         <h2 className="text-2xl font-bold text-white">Check Your Email</h2>
                         <p className="text-zinc-400 leading-relaxed">
-                            We've sent a password reset link to <span className="text-white font-medium">{email}</span>. Click the link in the email to set a new password.
+                            We&apos;ve sent a password reset link to <span className="text-white font-medium">{email}</span>. Click the link in the email to set a new password.
                         </p>
                         <p className="text-zinc-500 text-sm">
-                            Didn't receive it? Check your spam folder or try again.
+                            Didn&apos;t receive it? Check your spam folder or try again.
                         </p>
                         <div className="pt-4 flex flex-col gap-3">
                             <Button
@@ -100,7 +101,7 @@ export default function ForgotPasswordPage() {
 
                     <div className="text-left mb-10">
                         <h2 className="text-3xl font-extrabold tracking-tight text-white mb-3">Reset password</h2>
-                        <p className="text-zinc-400">Enter your email and we'll send you a link to reset your password.</p>
+                        <p className="text-zinc-400">Enter your email and we&apos;ll send you a link to reset your password.</p>
                     </div>
 
                     <form onSubmit={handleReset} className="space-y-6">

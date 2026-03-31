@@ -7,7 +7,7 @@ import { db, storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, Image as ImageIcon, X, CornerDownRight, ThumbsUp } from "lucide-react";
+import { MessageCircle, Image as ImageIcon, X, ThumbsUp } from "lucide-react";
 import { containsSpam } from "@/lib/filter";
 import { v4 as uuidv4 } from 'uuid'; // Standard practice for unique file names
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,7 @@ interface Answer {
     userId: string;
     text: string;
     imageUrl?: string;
-    createdAt: any;
+    createdAt: { toDate?: () => Date } | Date | number;
     upvotes?: number;
 }
 
@@ -28,7 +28,7 @@ interface Question {
     question: string;
     category: string;
     userId: string;
-    createdAt: any;
+    createdAt: { toDate?: () => Date } | Date | number;
     upvotes?: number;
 }
 
@@ -42,9 +42,14 @@ const generateAvatarGradient = (userId: string) => {
     return `linear-gradient(135deg, ${c1}, ${c2})`;
 };
 
-const formatTimeAgo = (timestamp: any) => {
+const formatTimeAgo = (timestamp: { toDate?: () => Date } | Date | string | number | null | undefined) => {
     if (!timestamp) return 'Just now';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    let date: Date;
+    if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } else {
+        date = new Date(timestamp as string | number | Date);
+    }
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'Just now';
     const minutes = Math.floor(seconds / 60);
@@ -137,9 +142,10 @@ export default function QuestionItem({ question }: { question: Question }) {
             setNewAnswer("");
             clearImage();
             setIsReplying(false);
-        } catch (err: any) {
-            console.error("Failed to post answer", err);
-            setError(err.message || "Failed to post answer.");
+        } catch (err) {
+            const error = err as Error;
+            console.error("Failed to post answer", error);
+            setError(error.message || "Failed to post answer.");
         } finally {
             setSubmitting(false);
         }

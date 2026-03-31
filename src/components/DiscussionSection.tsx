@@ -32,9 +32,14 @@ const generateAvatarGradient = (userId: string) => {
     return `linear-gradient(135deg, ${c1}, ${c2})`;
 };
 
-const formatTimeAgo = (timestamp: any) => {
+const formatTimeAgo = (timestamp: { toDate?: () => Date } | Date | string | number | null | undefined) => {
     if (!timestamp) return 'Just now';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    let date: Date;
+    if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } else {
+        date = new Date(timestamp as string | number | Date);
+    }
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     if (seconds < 60) return 'Just now';
     const minutes = Math.floor(seconds / 60);
@@ -48,7 +53,7 @@ interface Comment {
     id: string;
     text: string;
     userId: string;
-    createdAt: any;
+    createdAt: { toDate?: () => Date } | Date | number;
 }
 
 interface Question {
@@ -56,7 +61,7 @@ interface Question {
     question: string;
     category: string;
     userId: string;
-    createdAt: any;
+    createdAt: { toDate?: () => Date } | Date | number;
 }
 
 export default function DiscussionSection({ ideaId }: { ideaId: string }) {

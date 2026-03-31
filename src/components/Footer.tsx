@@ -1,6 +1,24 @@
 import Link from "next/link";
 
-export default function Footer() {
+interface FooterProps {
+  variant?: "full" | "minimal";
+}
+
+export default function Footer({ variant = "full" }: FooterProps) {
+    if (variant === "minimal") {
+        return (
+            <footer className="w-full py-6 border-t border-white/[0.04] mt-12 bg-transparent overflow-hidden">
+                <div className="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+                    <Link href="/about" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Why Inzly</Link>
+                    <Link href="/careers" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Work With Us</Link>
+                    <Link href="/news" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">News</Link>
+                    <Link href="/leaderboard" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Leaderboard</Link>
+                    <Link href="/privacy" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-widest transition-colors">Privacy</Link>
+                </div>
+            </footer>
+        );
+    }
+
     return (
         <footer className="w-full bg-[#050507] border-t border-white/[0.04] pt-20 pb-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

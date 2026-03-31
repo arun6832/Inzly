@@ -24,7 +24,7 @@ export default function PrivacyPage() {
 
                         <h3 className="text-xl font-semibold text-white mt-10 mb-4">2. Intellectual Property & Ideas</h3>
                         <p>
-                            Ideas posted on the public feed are visible to authenticated users. While we curate our community, we cannot guarantee strict confidentiality of public posts. We recommend sharing the "vision" and "problem statement" rather than proprietary code or deeply guarded trade secrets until you match with a co-founder.
+                            Ideas posted on the public feed are visible to authenticated users. While we curate our community, we cannot guarantee strict confidentiality of public posts. We recommend sharing the &quot;vision&quot; and &quot;problem statement&quot; rather than proprietary code or deeply guarded trade secrets until you match with a co-founder.
                         </p>
 
                         <h3 className="text-xl font-semibold text-white mt-10 mb-4">3. How We Use Information</h3>

@@ -58,8 +58,9 @@ export default function SignupPage() {
                 window.location.href = "/";
             }, 2500);
 
-        } catch (err: any) {
-            setError(err.message || "Failed to create an account.");
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || "Failed to create an account.");
             setLoading(false);
         }
     };

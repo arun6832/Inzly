@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bookmark, ExternalLink, Heart, User } from "lucide-react";
+import { Bookmark, Heart, User } from "lucide-react";
 
 interface Idea {
     id: string;
@@ -18,7 +18,7 @@ interface Idea {
 export default function SavedIdeasPage() {
     const { user, loading } = useAuth();
     const [savedIdeas, setSavedIdeas] = useState<Idea[]>([]);
-    const [userData, setUserData] = useState<any>(null);
+    const [userData, setUserData] = useState<{name?: string, totalLikes?: number} | null>(null);
     const [fetching, setFetching] = useState(true);
 
     useEffect(() => {

@@ -6,6 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Share2, BookmarkPlus, Heart } from "lucide-react";
+import { Github } from "@/components/icons";
 import { useAuth } from "@/lib/AuthContext";
 import DiscussionSection from "@/components/DiscussionSection";
 
@@ -18,6 +19,7 @@ interface Idea {
     userId: string;
     likesCount?: number;
     views?: number;
+    githubUrl?: string;
 }
 
 export default function IdeaDetailPage() {
@@ -44,16 +46,21 @@ export default function IdeaDetailPage() {
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    setIdeaData({ id: docSnap.id, ...docSnap.data() } as Idea);
+                    const data = docSnap.data();
+                    setIdeaData({ 
+                        id: docSnap.id, 
+                        ...data,
+                        views: (data.views || 0) + 1 // Optimistically show the new view
+                    } as Idea);
                     
-                    // Increment views count
+                    // Increment views count in DB
                     const { updateDoc, increment } = await import("firebase/firestore");
                     // We catch the error so it doesn't break the page load if it fails
                     updateDoc(docRef, { views: increment(1) }).catch(e => console.error("Failed to update views", e));
                 } else {
                     setError("Idea not found.");
                 }
-            } catch (err: any) {
+            } catch {
                 setError("Failed to load idea.");
             } finally {
                 setLoading(false);
@@ -282,6 +289,35 @@ export default function IdeaDetailPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {ideaData.githubUrl && (
+                                <div className="mt-6 pt-6 border-t border-white/[0.04]">
+                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                                        Open Source
+                                    </h3>
+                                    <a 
+                                        href={ideaData.githubUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-all group"
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/5">
+                                                <Github className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-white leading-tight">GitHub Repo</p>
+                                                <p className="text-[10px] text-zinc-500 font-medium">View Source Code</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        </div>
+                                    </a>
+                                </div>
+                            )}
 
                             <div className="pt-8 mt-8 border-t border-white/[0.04] space-y-4">
                                 <Button 

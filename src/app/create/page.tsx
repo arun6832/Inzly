@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { containsSpam } from "@/lib/filter";
+import { Github } from "@/components/icons";
 
 const CATEGORIES = [
     "SaaS",
@@ -32,6 +33,7 @@ export default function CreateIdeaPage() {
     const [problem, setProblem] = useState("");
     const [idea, setIdea] = useState("");
     const [category, setCategory] = useState("");
+    const [githubUrl, setGithubUrl] = useState("");
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -73,12 +75,14 @@ export default function CreateIdeaPage() {
                 problem,
                 idea,
                 category,
+                githubUrl: githubUrl.trim() || null,
                 userId: user.uid,
                 createdAt: serverTimestamp(),
             });
             router.push("/");
-        } catch (err: any) {
-            setError(err.message || "Failed to post idea.");
+        } catch (err) {
+            const error = err as Error;
+            setError(error.message || "Failed to post idea.");
         } finally {
             setIsSubmitting(false);
         }
@@ -150,6 +154,20 @@ export default function CreateIdeaPage() {
                                 onChange={(e) => setIdea(e.target.value)}
                                 required
                                 className="min-h-[160px] bg-white/[0.03] border-white/5 text-white rounded-2xl focus-visible:ring-purple-500 p-4 text-base resize-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="githubUrl" className="text-zinc-300 font-medium ml-1 flex items-center">
+                                <Github className="w-4 h-4 mr-2 text-zinc-500" />
+                                GitHub Repository (Optional)
+                            </Label>
+                            <Input
+                                id="githubUrl"
+                                placeholder="https://github.com/your-username/your-repo"
+                                value={githubUrl}
+                                onChange={(e) => setGithubUrl(e.target.value)}
+                                className="h-14 bg-white/[0.03] border-white/5 text-white rounded-2xl focus-visible:ring-purple-500 px-4 text-base"
                             />
                         </div>
                     </div>
