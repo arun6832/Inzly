@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 
 export default function PrivacyPage() {
     return (
@@ -39,7 +38,6 @@ export default function PrivacyPage() {
                     </article>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

@@ -1,4 +1,3 @@
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 
 export default function CareersPage() {
@@ -36,7 +35,6 @@ export default function CareersPage() {
                     </section>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

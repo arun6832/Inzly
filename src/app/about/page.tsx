@@ -1,4 +1,4 @@
-import Footer from "@/components/Footer";
+import Link from "next/link";
 
 export default function AboutPage() {
     return (
@@ -25,7 +25,7 @@ export default function AboutPage() {
 
                     <section className="space-y-8 text-lg text-zinc-400/90 leading-relaxed">
                         <p>
-                            The startup landscape has fundamentally changed. Building a product is no longer the hardest part—distributing it and finding the right people to build it with is. Inzly was created to solve the cold-start problem for visionary builders.
+                            The startup landscape has fundamentally changed. Building a product is no longer the hardest part; distributing it and finding the right people to build it with is. Inzly was created to solve the cold-start problem for visionary builders.
                         </p>
                         <p>
                             Too many brilliant ideas die because their creators lack a sounding board. They build in the dark, launch to crickets, and assume the idea was flawed, when in reality, it just lacked the sunlight of early feedback and the right technical co-founder.
@@ -40,7 +40,6 @@ export default function AboutPage() {
                     </section>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

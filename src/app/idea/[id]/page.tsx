@@ -20,6 +20,7 @@ interface Idea {
     likesCount?: number;
     views?: number;
     githubUrl?: string;
+    authorUsername?: string;
 }
 
 export default function IdeaDetailPage() {
@@ -47,9 +48,16 @@ export default function IdeaDetailPage() {
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    
+                    // Fetch author username
+                    const authorRef = doc(db, "users", data.userId);
+                    const authorSnap = await getDoc(authorRef);
+                    const authorUsername = authorSnap.exists() ? authorSnap.data().username : "unknown";
+
                     setIdeaData({ 
                         id: docSnap.id, 
                         ...data,
+                        authorUsername,
                         views: (data.views || 0) + 1 // Optimistically show the new view
                     } as Idea);
                     
@@ -220,6 +228,14 @@ export default function IdeaDetailPage() {
                     <div className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-widest">
                         {ideaData.category}
                     </div>
+                    {ideaData.authorUsername && (
+                        <button 
+                            onClick={() => router.push(`/user/${ideaData.authorUsername}`)}
+                            className="inline-flex items-center ml-4 px-3 py-1.5 rounded-full text-[10px] font-black bg-white/5 text-zinc-400 border border-white/5 hover:border-white/10 hover:text-white transition-all uppercase tracking-widest"
+                        >
+                            Builder: @{ideaData.authorUsername}
+                        </button>
+                    )}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none">
                         {ideaData.title}
                     </h1>
@@ -321,17 +337,28 @@ export default function IdeaDetailPage() {
 
                             <div className="pt-8 mt-8 border-t border-white/[0.04] space-y-4">
                                 <Button 
-                                    onClick={() => document.getElementById('discussion')?.scrollIntoView({ behavior: 'smooth' })}
-                                    className="w-full bg-gradient-to-tr from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-full h-12 font-bold shadow-lg shadow-purple-500/20"
+                                    onClick={async () => {
+                                        if (!user) {
+                                            router.push('/login');
+                                            return;
+                                        }
+                                        if (user.uid === ideaData.userId) {
+                                            alert("This is your own idea. Visit Messages to see your chats.");
+                                            return;
+                                        }
+                                        const { getOrCreateChat } = await import("@/lib/messaging");
+                                        const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                        router.push(`/messages/${chatId}`);
+                                    }}
+                                    className="w-full bg-white text-black hover:bg-zinc-200 rounded-full h-12 font-bold shadow-lg"
                                 >
-                                    Ask a Question
+                                    Message Founder
                                 </Button>
                                 <Button 
                                     onClick={() => document.getElementById('discussion')?.scrollIntoView({ behavior: 'smooth' })}
-                                    variant="outline" 
-                                    className="w-full text-zinc-300 border-white/[0.08] hover:bg-white/[0.04] rounded-full h-12 font-semibold"
+                                    className="w-full bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 text-indigo-300 border border-indigo-500/20 rounded-full h-12 font-bold"
                                 >
-                                    Join Discussion
+                                    Ask a Question
                                 </Button>
                             </div>
                         </div>

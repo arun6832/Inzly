@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Footer from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 
 interface NewsItem {
@@ -100,7 +99,6 @@ export default function AINewsPage() {
                     )}
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

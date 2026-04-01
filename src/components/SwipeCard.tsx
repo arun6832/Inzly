@@ -3,9 +3,10 @@
 import { useState, useCallback } from "react";
 import { motion, useMotionValue, useTransform, animate, PanInfo } from "framer-motion";
 import { Button } from "./ui/button";
-import { X, Heart, ExternalLink } from "lucide-react";
+import { X, Heart, ExternalLink, MessageSquare, User } from "lucide-react";
 import { Github } from "@/components/icons";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Idea {
     id: string;
@@ -17,6 +18,7 @@ interface Idea {
     likesCount?: number;
     views?: number;
     githubUrl?: string;
+    authorUsername?: string;
 }
 
 interface SwipeCardProps {
@@ -31,6 +33,7 @@ const EXIT_DISTANCE = 600;
 
 export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardProps) {
     const [exiting, setExiting] = useState(false);
+    const router = useRouter();
 
     const x = useMotionValue(0);
     // Gentler rotation — max ±12° at ±300px drag
@@ -141,9 +144,23 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
 
             <div className="flex-1 overflow-y-auto space-y-6 select-none hide-scrollbar relative z-10">
                 <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        {idea.category}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            {idea.category}
+                        </span>
+                        {idea.authorUsername && (
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/user/${idea.authorUsername}`);
+                                }}
+                                className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 text-[10px] font-bold text-zinc-500 hover:text-white border border-white/5 transition-all uppercase tracking-widest"
+                            >
+                                <User className="w-2.5 h-2.5" />
+                                {idea.authorUsername}
+                            </button>
+                        )}
+                    </div>
                     <div className="flex items-center space-x-3 text-zinc-400 text-sm font-medium">
                         <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
                             <Heart className="w-3.5 h-3.5 mr-1 text-red-400" />
@@ -194,11 +211,38 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                     <X className="w-8 h-8" />
                 </Button>
 
-                <Link href={`/idea/${idea.id}`}>
-                    <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-6">
-                        Read Details
+                <div className="flex items-center space-x-2">
+                    <Link href={`/idea/${idea.id}`}>
+                        <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-6">
+                            Read Details
+                        </Button>
+                    </Link>
+                    <Button 
+                        size="icon" 
+                        variant="ghost"
+                        onClick={async (e) => {
+                            e.stopPropagation();
+                            const { getOrCreateChat } = await import("@/lib/messaging");
+                            if (!active) return;
+                            // Check if current user is founder
+                            const { auth } = await import("@/lib/firebase");
+                            const currentUser = auth.currentUser;
+                            if (!currentUser) {
+                                window.location.href = "/login";
+                                return;
+                            }
+                            if (currentUser.uid === idea.userId) {
+                                alert("This is your idea. Visit Messages to see your chats.");
+                                return;
+                            }
+                            const chatId = await getOrCreateChat(currentUser.uid, idea.userId);
+                            window.location.href = `/messages/${chatId}`;
+                        }}
+                        className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08]"
+                    >
+                        <MessageSquare className="w-4 h-4" />
                     </Button>
-                </Link>
+                </div>
 
                 <Button
                     onClick={() => handleManualSwipe("right")}
