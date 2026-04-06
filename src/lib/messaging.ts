@@ -9,7 +9,6 @@ import {
     onSnapshot,
     doc,
     updateDoc,
-    setDoc,
     limit
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -19,7 +18,7 @@ export interface Chat {
     participants: string[];
     lastMessage?: string;
     lastMessageSender?: string;
-    updatedAt: any;
+    updatedAt: { toDate?: () => Date } | Date | number | string;
     // Metadata for UI (we'll fetch these based on uids)
     otherUser?: {
         name: string;
@@ -32,7 +31,7 @@ export interface Message {
     id: string;
     senderId: string;
     text: string;
-    timestamp: any;
+    timestamp: { toDate?: () => Date } | Date | number | string;
 }
 
 /**

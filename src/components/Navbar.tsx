@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "./ui/button";
 import GlobalSearch from "./GlobalSearch";
-import { Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, Search } from "lucide-react";
+import { Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, Search, UserCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
 export default function Navbar() {
-    const { user, signOut } = useAuth();
+    const { user, userMode, signOut } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -57,6 +56,16 @@ export default function Navbar() {
                         <div className="hidden lg:flex items-center space-x-2">
                             {user ? (
                                 <>
+                                    <div className="flex items-center px-4 h-10 bg-white/[0.03] border border-white/5 rounded-full">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                            userMode === 'catalyst' ? 'text-emerald-400' :
+                                            userMode === 'builder' ? 'text-amber-400' :
+                                            userMode === 'sparker' ? 'text-purple-400' :
+                                            'text-blue-400'
+                                        }`}>
+                                            {userMode || 'Member'}
+                                        </span>
+                                    </div>
                                     <Link href="/leaderboard">
                                         <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
                                             Leaderboard
@@ -116,6 +125,18 @@ export default function Navbar() {
                     >
                         {user ? (
                             <div className="flex flex-col space-y-2">
+                                <div className="flex items-center justify-center p-4 bg-white/[0.03] border border-white/5 rounded-2xl mb-2">
+                                        <UserCircle2 className="w-5 h-5 mr-3 text-zinc-400" />
+                                        <span className={`text-sm font-black uppercase tracking-widest ${
+                                            userMode === 'catalyst' ? 'text-emerald-400' :
+                                            userMode === 'builder' ? 'text-amber-400' :
+                                            userMode === 'sparker' ? 'text-purple-400' :
+                                            'text-blue-400'
+                                        }`}>
+                                            {userMode || 'Member'}
+                                        </span>
+                                </div>
+
                                 <Link href="/create" onClick={closeMenu}>
                                     <Button className="w-full bg-white text-black hover:bg-zinc-200 rounded-2xl h-14 font-black text-lg gap-3">
                                         <Rocket className="w-5 h-5" />

@@ -5,8 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { 
     collection, 
     query, 
-    where, 
-    getDocs, 
     addDoc, 
     onSnapshot, 
     orderBy, 
@@ -43,7 +41,7 @@ export default function ChatPage() {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
-    const [otherUser, setOtherUser] = useState<any>(null);
+    const [otherUser, setOtherUser] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
 
     // 1. Fetch Chat Info & Other User
@@ -151,7 +149,7 @@ export default function ChatPage() {
                         </div>
                         <div>
                             <h3 className="text-sm font-black text-white px-2 leading-none flex items-center gap-1.5 uppercase tracking-wider">
-                                {otherUser?.name || "Builder"}
+                                {(otherUser?.name as string) || "Builder"}
                                 <ShieldCheck className="w-3 h-3 text-indigo-400" />
                             </h3>
                             <p className="text-[10px] text-zinc-600 font-bold px-2 uppercase tracking-widest mt-0.5">

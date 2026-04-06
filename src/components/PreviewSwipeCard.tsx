@@ -10,7 +10,6 @@ import Link from "next/link";
 interface Idea {
     id: string;
     title: string;
-    problem: string;
     idea: string;
     category: string;
     userId: string;
@@ -34,8 +33,8 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
     const cardOpacity = useTransform(x, [-300, -150, 0, 150, 300], [0.85, 1, 1, 1, 0.85]);
     const dragScale = useTransform(x, [-300, 0, 300], [0.95, 1, 0.95]);
 
-    const likeOpacity = useTransform(x, [0, 60, 150], [0, 0.4, 1]);
-    const nopeOpacity = useTransform(x, [-150, -60, 0], [1, 0.4, 0]);
+    const saveOpacity = useTransform(x, [0, 60, 150], [0, 0.3, 0.8]);
+    const skipOpacity = useTransform(x, [-150, -60, 0], [0.8, 0.3, 0]);
 
     const triggerGate = useCallback((message: string) => {
         setGateMessage(message);
@@ -159,26 +158,32 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                 dragElastic={0.9}
                 dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
                 onDragEnd={handleDragEnd}
-                className="absolute inset-0 flex flex-col justify-between bg-[#121218]/95 backdrop-blur-sm border border-white/[0.06] rounded-[32px] shadow-2xl p-6 sm:p-8 cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 flex flex-col justify-between bg-[#121218]/80 backdrop-blur-md border border-white/[0.06] rounded-[32px] shadow-2xl p-6 sm:p-8 cursor-grab active:cursor-grabbing overflow-hidden"
             >
+                <motion.div 
+                    className="absolute inset-0 z-0 pointer-events-none blur-[100px] opacity-40 mix-blend-screen"
+                >
+                    <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-purple-500/30 rounded-full" />
+                    <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-blue-500/30 rounded-full" />
+                </motion.div>
                 {/* Swipe Direction Indicators */}
                 <>
                     {/* LIKE overlay */}
                     <motion.div
-                        style={{ opacity: likeOpacity }}
-                        className="absolute inset-0 rounded-[32px] border-[3px] border-green-400/60 pointer-events-none z-20 flex items-start justify-start p-8"
+                        style={{ opacity: saveOpacity }}
+                        className="absolute inset-0 rounded-[32px] border-[3px] border-emerald-500/50 bg-gradient-to-r from-transparent to-emerald-500/10 pointer-events-none z-20 flex items-start justify-start p-8"
                     >
-                        <div className="px-4 py-2 rounded-xl border-2 border-green-400 text-green-400 font-black text-xl tracking-wider rotate-[-12deg] uppercase">
-                            Like
+                        <div className="px-5 py-2 rounded-xl border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)] text-emerald-400 font-black text-2xl tracking-widest rotate-[-12deg] uppercase backdrop-blur-md">
+                            LIKE
                         </div>
                     </motion.div>
                     {/* NOPE overlay */}
                     <motion.div
-                        style={{ opacity: nopeOpacity }}
-                        className="absolute inset-0 rounded-[32px] border-[3px] border-red-400/60 pointer-events-none z-20 flex items-start justify-end p-8"
+                        style={{ opacity: skipOpacity }}
+                        className="absolute inset-0 rounded-[32px] border-[3px] border-rose-500/50 bg-gradient-to-l from-transparent to-rose-500/10 pointer-events-none z-20 flex items-start justify-end p-8"
                     >
-                        <div className="px-4 py-2 rounded-xl border-2 border-red-400 text-red-400 font-black text-xl tracking-wider rotate-[12deg] uppercase">
-                            Nope
+                        <div className="px-5 py-2 rounded-xl border-2 border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)] text-rose-400 font-black text-2xl tracking-widest rotate-[12deg] uppercase backdrop-blur-md">
+                            NOPE
                         </div>
                     </motion.div>
                 </>
@@ -190,7 +195,7 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                         </span>
                         <div className="flex items-center space-x-3 text-zinc-400 text-sm font-medium">
                             <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
-                                <Heart className="w-3.5 h-3.5 mr-1 text-red-400" />
+                                <Heart className="w-3.5 h-3.5 mr-1 text-zinc-300" />
                                 {idea.likesCount || 0}
                             </div>
                             <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
@@ -211,17 +216,8 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                         {idea.title}
                     </h2>
 
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">The Problem</h3>
-                            <p className="text-zinc-300 text-lg line-clamp-4">{idea.problem}</p>
-                        </div>
-                        <div className="relative">
-                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">The Idea</h3>
-                            <p className="text-white text-lg line-clamp-3">{idea.idea}</p>
-                            {/* Fade-out gradient to tease more content */}
-                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#121218] to-transparent pointer-events-none" />
-                        </div>
+                    <div>
+                        <p className="text-zinc-300 text-lg line-clamp-6 leading-relaxed">{idea.idea}</p>
                     </div>
                 </div>
 
@@ -230,9 +226,9 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                         onClick={() => handleManualSwipe("left")}
                         size="icon"
                         variant="outline"
-                        className="w-16 h-16 rounded-full border-none bg-white/[0.04] text-zinc-400 hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110 shadow-md"
+                        className="w-14 h-14 rounded-full border border-white/[0.05] bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05] hover:text-white transition-all duration-300 transform hover:scale-105 shadow-md"
                     >
-                        <X className="w-8 h-8" />
+                        <X className="w-6 h-6" />
                     </Button>
 
                     <Button
@@ -246,9 +242,9 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                     <Button
                         onClick={() => handleManualSwipe("right")}
                         size="icon"
-                        className="w-16 h-16 rounded-full border-none bg-gradient-to-tr from-indigo-500 to-purple-500 text-white hover:from-indigo-400 hover:to-purple-400 transition-all duration-300 transform hover:scale-110 shadow-[0_8px_30px_rgb(168,85,247,0.4)]"
+                        className="w-14 h-14 rounded-full border-2 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-[0_0_20px_rgba(16,185,129,0.3)] shadow-emerald-500/20 flex items-center justify-center p-0"
                     >
-                        <Heart className="w-8 h-8 fill-current" />
+                        <Heart className="w-7 h-7 fill-current" />
                     </Button>
                 </div>
             </motion.div>

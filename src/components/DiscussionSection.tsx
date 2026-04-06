@@ -15,11 +15,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const QUESTION_CATEGORIES = [
     "Problem Clarity",
-    "Solution Depth",
-    "Market & Users",
+    "Solution Mechanics",
+    "Market Dynamics",
     "Execution Feasibility",
-    "Business Model",
-    "Risks"
+    "Structural Risks"
 ];
 
 const generateAvatarGradient = (userId: string) => {
@@ -146,32 +145,32 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
     return (
         <div className="w-full">
             <Tabs defaultValue="questions" className="w-full">
-                <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 bg-[#121218] border border-white/[0.04] mb-8 rounded-full p-1.5 h-14 shadow-lg shadow-black/20">
-                    <TabsTrigger value="questions" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
+                <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 bg-[#0a0a0c] border border-white/[0.04] mb-8 rounded-xl p-1.5 h-12 shadow-md">
+                    <TabsTrigger value="questions" className="rounded-lg text-zinc-400 font-medium data-[state=active]:bg-white/[0.05] data-[state=active]:text-white">
                         <HelpCircle className="w-4 h-4 mr-2" />
-                        Questions ({questions.length})
+                        Objections ({questions.length})
                     </TabsTrigger>
-                    <TabsTrigger value="comments" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                    <TabsTrigger value="comments" className="rounded-lg text-zinc-400 font-medium data-[state=active]:bg-white/[0.05] data-[state=active]:text-white">
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        Comments ({comments.length})
+                        Feedback ({comments.length})
                     </TabsTrigger>
                 </TabsList>
 
                 {/* QUESTIONS TAB */}
                 <TabsContent value="questions" className="space-y-8 animate-in fade-in-50 duration-500">
                     {user ? (
-                        <div className="bg-[#121218] p-8 rounded-[32px] border border-white/[0.04] shadow-xl space-y-5">
-                            <h3 className="text-xl font-bold text-white">Ask a Meaningful Question</h3>
-                            <p className="text-zinc-400">Help the founder by asking questions that challenge their assumptions.</p>
+                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-[24px] border border-white/[0.04] shadow-xl space-y-5">
+                            <h3 className="text-lg font-medium text-white">Challenge the Execution</h3>
+                            <p className="text-xs text-zinc-500">Provide critical friction points regarding the model.</p>
 
                             <div className="space-y-4">
                                 <Select value={questionCategory} onValueChange={(val) => setQuestionCategory(val || "")}>
-                                    <SelectTrigger className="w-full bg-zinc-950 border-zinc-800 text-white">
-                                        <SelectValue placeholder="Select a question category" />
+                                    <SelectTrigger className="w-full bg-white/[0.02] border-white/5 text-zinc-300 rounded-xl h-12">
+                                        <SelectValue placeholder="Select a risk category" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    <SelectContent className="bg-[#0a0a0c] border-white/5 text-white">
                                         {QUESTION_CATEGORIES.map(cat => (
-                                            <SelectItem key={cat} value={cat} className="focus:bg-zinc-800 focus:text-white cursor-pointer">
+                                            <SelectItem key={cat} value={cat} className="focus:bg-white/5 focus:text-white cursor-pointer rounded-lg">
                                                 {cat}
                                             </SelectItem>
                                         ))}
@@ -179,15 +178,15 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                                 </Select>
 
                                 <Textarea
-                                    placeholder="What is your biggest assumption regarding user acquisition?"
+                                    placeholder="Outline the critical blocker in this execution path..."
                                     value={newQuestion}
                                     onChange={(e) => setNewQuestion(e.target.value)}
-                                    className="min-h-[120px] bg-white/[0.03] border-white/5 text-white focus-visible:ring-purple-500 rounded-2xl p-4 text-base resize-none"
+                                    className="min-h-[120px] bg-white/[0.02] border border-white/[0.05] text-zinc-200 focus-visible:ring-1 focus-visible:ring-white/20 rounded-xl p-4 text-sm resize-none"
                                 />
 
                                 <div className="flex justify-end pt-2">
-                                    <Button onClick={handlePostQuestion} disabled={!newQuestion.trim() || !questionCategory || submitting} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-full px-8 h-12 font-bold transition-all shadow-lg">
-                                        {submitting ? "Posting..." : "Post Question"}
+                                    <Button onClick={handlePostQuestion} disabled={!newQuestion.trim() || !questionCategory || submitting} className="bg-white hover:bg-zinc-200 text-black rounded-lg px-8 h-10 font-bold transition-all shadow-md">
+                                        {submitting ? "Submitting..." : "Submit Objection"}
                                     </Button>
                                 </div>
                             </div>
@@ -220,20 +219,20 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                 {/* COMMENTS TAB */}
                 <TabsContent value="comments" className="space-y-8 animate-in fade-in-50 duration-500">
                     {user ? (
-                        <div className="bg-[#121218] p-8 rounded-[32px] border border-white/[0.04] shadow-xl space-y-5">
-                            <h3 className="text-xl font-bold text-white">Leave a Comment</h3>
+                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-[24px] border border-white/[0.04] shadow-xl space-y-5">
+                            <h3 className="text-lg font-medium text-white">Provide Input</h3>
 
                             <div className="space-y-4">
                                 <Textarea
-                                    placeholder="Share your thoughts or feedback..."
+                                    placeholder="Share structured feedback on the model..."
                                     value={newComment}
                                     onChange={(e) => setNewComment(e.target.value)}
-                                    className="min-h-[120px] bg-white/[0.03] border-white/5 text-white focus-visible:ring-zinc-500 rounded-2xl p-4 text-base resize-none"
+                                    className="min-h-[120px] bg-white/[0.02] border border-white/[0.05] text-zinc-200 focus-visible:ring-1 focus-visible:ring-white/20 rounded-xl p-4 text-sm resize-none"
                                 />
 
                                 <div className="flex justify-end pt-2">
-                                    <Button onClick={handlePostComment} disabled={!newComment.trim() || submitting} className="bg-white hover:bg-zinc-200 text-black rounded-full px-8 h-12 font-bold transition-all shadow-lg">
-                                        {submitting ? "Posting..." : "Post Comment"}
+                                    <Button onClick={handlePostComment} disabled={!newComment.trim() || submitting} className="bg-white hover:bg-zinc-200 text-black rounded-lg px-8 h-10 font-bold transition-all shadow-md">
+                                        {submitting ? "Submitting..." : "Submit Input"}
                                     </Button>
                                 </div>
                             </div>
@@ -252,19 +251,20 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: Math.min(i * 0.1, 0.5) }}
-                                className="p-6 sm:p-8 bg-[#121218] border border-white/[0.04] shadow-xl rounded-[32px] hover:border-white/10 transition-colors"
                             >
-                                <div className="flex items-center space-x-3 mb-4">
-                                    <div className="w-10 h-10 rounded-full shadow-inner" style={{ background: generateAvatarGradient(c.userId) }} />
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-zinc-200 font-bold text-sm">Builder {c.userId.substring(0,4)}</span>
-                                            <span className="text-zinc-600 text-xs">•</span>
-                                            <span className="text-zinc-500 text-xs font-medium">{formatTimeAgo(c.createdAt)}</span>
+                                <div className="p-6 sm:p-8 bg-[#0a0a0c] border border-white/[0.04] shadow-xl rounded-[24px] hover:border-white/10 transition-colors">
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-8 h-8 rounded-full shadow-inner" style={{ background: generateAvatarGradient(c.userId) }} />
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center space-x-2 text-[10px] uppercase font-bold tracking-widest text-zinc-500">
+                                                <span>Member {c.userId.substring(0,4)}</span>
+                                                <span>•</span>
+                                                <span>{formatTimeAgo(c.createdAt)}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <p className="text-zinc-300 leading-relaxed text-sm font-light">{c.text}</p>
                                 </div>
-                                <p className="text-zinc-300 leading-relaxed text-lg">{c.text}</p>
                             </motion.div>
                         ))}
                         </AnimatePresence>

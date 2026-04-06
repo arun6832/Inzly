@@ -175,7 +175,7 @@ export default function QuestionItem({ question }: { question: Question }) {
         <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 sm:p-8 bg-[#121218] border border-white/[0.04] shadow-xl rounded-[32px] space-y-6 hover:border-white/10 transition-colors"
+            className="p-6 sm:p-8 bg-[#0a0a0c] border border-white/[0.04] shadow-xl rounded-[24px] space-y-6 hover:border-white/10 transition-colors"
         >
             <div className="flex flex-col space-y-4">
                 {/* Header: Avatar, Name, Time */}
@@ -187,7 +187,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                             <span className="text-zinc-600 text-xs">•</span>
                             <span className="text-zinc-500 text-xs font-medium">{formatTimeAgo(question.createdAt)}</span>
                         </div>
-                        <span className="self-start px-2 py-0.5 mt-1 rounded-md text-[9px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        <span className="self-start px-2 py-0.5 mt-1 rounded-md text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-zinc-400 border border-white/[0.05]">
                             {question.category}
                         </span>
                     </div>
@@ -199,7 +199,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                     <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={handleUpvoteQuestion}
-                        className="flex items-center text-zinc-400 hover:text-purple-400 bg-white/[0.02] hover:bg-purple-500/10 px-4 h-10 rounded-full transition-colors border border-transparent hover:border-purple-500/20"
+                        className="flex items-center text-zinc-400 hover:text-white bg-white/[0.02] hover:bg-white/[0.05] px-4 h-10 rounded-lg transition-colors border border-transparent hover:border-white/10"
                     >
                         <ThumbsUp className="w-4 h-4 mr-2" />
                         <span className="font-semibold">{question.upvotes || 0}</span>
@@ -207,7 +207,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                     <Button
                         onClick={() => setIsReplying(!isReplying)}
                         variant="ghost"
-                        className={`text-zinc-400 hover:text-white rounded-full h-10 px-5 transition-colors ${isReplying ? 'bg-white/10 text-white' : 'bg-white/[0.02] hover:bg-white/[0.08]'}`}
+                        className={`text-zinc-400 hover:text-white rounded-lg h-10 px-5 transition-colors ${isReplying ? 'bg-white/10 text-white' : 'bg-white/[0.02] hover:bg-white/[0.08]'}`}
                     >
                         <MessageCircle className="w-4 h-4 mr-2" />
                         {answers.length} {answers.length === 1 ? 'Answer' : 'Answers'}
@@ -227,9 +227,9 @@ export default function QuestionItem({ question }: { question: Question }) {
                             className="flex space-x-3 relative z-10"
                         >
                             {/* Answer Avatar */}
-                            <div className="w-10 h-10 rounded-full shrink-0 shadow-inner border-[4px] border-[#121218]" style={{ background: generateAvatarGradient(ans.userId) }} />
+                            <div className="w-10 h-10 rounded-full shrink-0 shadow-inner border-[4px] border-[#0a0a0c]" style={{ background: generateAvatarGradient(ans.userId) }} />
                             
-                            <div className="space-y-2 w-full pt-1 bg-white/[0.02] p-5 rounded-3xl rounded-tl-xl border border-white/[0.02]">
+                            <div className="space-y-2 w-full pt-1 bg-white/[0.02] p-5 rounded-2xl rounded-tl-lg border border-white/[0.02]">
                                 <div className="flex items-center space-x-2 mb-2">
                                     <span className="text-zinc-300 font-bold text-sm">Builder {ans.userId.substring(0,4)}</span>
                                     <span className="text-zinc-600 text-xs">•</span>
@@ -246,7 +246,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                                     <motion.button
                                         whileTap={{ scale: 0.9 }}
                                         onClick={() => handleUpvoteAnswer(ans.id)}
-                                        className="flex items-center text-xs text-zinc-500 hover:text-indigo-400 transition-colors"
+                                        className="flex items-center text-xs text-zinc-500 hover:text-white transition-colors"
                                     >
                                         <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
                                         <span className="font-semibold">{ans.upvotes || 0}</span>
@@ -273,7 +273,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                                 placeholder="Post your answer..."
                                 value={newAnswer}
                                 onChange={(e) => setNewAnswer(e.target.value)}
-                                className="min-h-[100px] bg-white/[0.03] border-white/5 text-white focus-visible:ring-indigo-500 rounded-2xl p-4 text-base resize-none"
+                                className="min-h-[100px] bg-white/[0.02] border border-white/[0.05] text-zinc-200 focus-visible:ring-1 focus-visible:ring-white/20 rounded-xl p-4 text-sm resize-none"
                             />
 
                             {imagePreview && (
@@ -282,7 +282,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                                     <Button
                                         size="icon"
                                         variant="destructive"
-                                        className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-lg border-2 border-[#121218]"
+                                        className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-lg border-2 border-[#0a0a0c]"
                                         onClick={clearImage}
                                     >
                                         <X className="w-4 h-4" />
@@ -312,13 +312,13 @@ export default function QuestionItem({ question }: { question: Question }) {
                                 </div>
 
                                 <div className="flex space-x-3">
-                                    <Button onClick={() => setIsReplying(false)} variant="ghost" className="text-zinc-400 hover:text-white rounded-full">
+                                    <Button onClick={() => setIsReplying(false)} variant="ghost" className="text-zinc-400 hover:text-white rounded-lg">
                                         Cancel
                                     </Button>
                                     <Button
                                         onClick={handlePostAnswer}
                                         disabled={submitting || (!newAnswer.trim() && !imageFile)}
-                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full px-8 font-bold shadow-lg shadow-indigo-500/20"
+                                        className="bg-white hover:bg-zinc-200 text-black rounded-lg px-8 font-bold shadow-md"
                                     >
                                         {submitting ? "Posting..." : "Post"}
                                     </Button>

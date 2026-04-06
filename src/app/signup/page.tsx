@@ -21,6 +21,7 @@ export default function SignupPage() {
     const [bio, setBio] = useState("");
     const [error, setError] = useState("");
     const [usernameError, setUsernameError] = useState("");
+    const [mode, setMode] = useState("explorer");
     const [loading, setLoading] = useState(false);
     const [checkingUsername, setCheckingUsername] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -84,6 +85,7 @@ export default function SignupPage() {
                 name,
                 username: username.toLowerCase(),
                 email,
+                mode,
                 country: country || "Unknown",
                 bio: bio || "",
                 totalLikes: 0,
@@ -224,6 +226,25 @@ export default function SignupPage() {
                                         className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-white rounded-xl focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-zinc-300 font-medium ml-1">Platform Role</Label>
+                                <Select value={mode} onValueChange={(val) => setMode(val || "explorer")}>
+                                    <SelectTrigger className="w-full h-12 bg-zinc-950/50 border-zinc-800 text-white rounded-xl focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all">
+                                        <SelectValue placeholder="What are you looking for?" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                        {[
+                                            { id: "explorer", label: "Explorer (Looking for ideas)" },
+                                            { id: "sparker", label: "Sparker (Posting problems)" },
+                                            { id: "builder", label: "Builder (Creating solutions)" },
+                                            { id: "catalyst", label: "Catalyst (Investor / Advisor)" }
+                                        ].map(m => (
+                                            <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="space-y-2">

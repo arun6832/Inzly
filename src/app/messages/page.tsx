@@ -106,7 +106,7 @@ export default function MessagesDashboard() {
                                                 <span className="ml-2 text-indigo-400/60 font-medium text-xs">@{chat.otherUser?.username}</span>
                                             </h3>
                                             <span className="text-[10px] text-zinc-600 font-bold uppercase shrink-0">
-                                                {chat.updatedAt?.toDate ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                {(chat.updatedAt as any)?.toDate ? new Date((chat.updatedAt as any).toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                             </span>
                                         </div>
                                         <p className="text-zinc-400 text-sm truncate pr-8">

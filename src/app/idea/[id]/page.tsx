@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Share2, BookmarkPlus, Heart } from "lucide-react";
+import { ChevronLeft, Share2, BookmarkPlus } from "lucide-react";
 import { Github } from "@/components/icons";
 import { useAuth } from "@/lib/AuthContext";
 import DiscussionSection from "@/components/DiscussionSection";
@@ -13,7 +13,6 @@ import DiscussionSection from "@/components/DiscussionSection";
 interface Idea {
     id: string;
     title: string;
-    problem: string;
     idea: string;
     category: string;
     userId: string;
@@ -32,10 +31,7 @@ export default function IdeaDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     
-    // Engagement states
-    const [hasLiked, setHasLiked] = useState(false);
     const [hasSaved, setHasSaved] = useState(false);
-    const [liking, setLiking] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const ideaId = params.id as string;
@@ -92,11 +88,6 @@ export default function IdeaDetailPage() {
                 const savedQ = query(collection(db, "savedIdeas"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
                 const savedSnap = await getDocs(savedQ);
                 if (!savedSnap.empty) setHasSaved(true);
-
-                // Check liked
-                const likedQ = query(collection(db, "likes"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
-                const likedSnap = await getDocs(likedQ);
-                if (!likedSnap.empty) setHasLiked(true);
             } catch (err) {
                 console.error("Failed to fetch interaction status", err);
             }
@@ -124,41 +115,6 @@ export default function IdeaDetailPage() {
         }
     };
 
-    const handleLike = async () => {
-        if (!user || hasLiked || liking) return;
-        setLiking(true);
-        setHasLiked(true);
-        
-        // Optimistic UI Update
-        setIdeaData(prev => prev ? { ...prev, likesCount: (prev.likesCount || 0) + 1 } : prev);
-
-        try {
-            const { addDoc, collection, serverTimestamp, doc, updateDoc, increment } = await import("firebase/firestore");
-            
-            await addDoc(collection(db, "likes"), {
-                userId: user.uid,
-                ideaId,
-                createdAt: serverTimestamp()
-            });
-
-            // Increment the counter on the idea document
-            const ideaRef = doc(db, "ideas", ideaId);
-            await updateDoc(ideaRef, { likesCount: increment(1) });
-            
-            // Increment the author's total likes
-            if (ideaData?.userId) {
-                const authorRef = doc(db, "users", ideaData.userId);
-                updateDoc(authorRef, { totalLikes: increment(1) }).catch(e => console.error("Author likes err", e));
-            }
-        } catch (err) {
-            console.error(err);
-            setHasLiked(false);
-            setIdeaData(prev => prev ? { ...prev, likesCount: (prev.likesCount || 0) - 1 } : prev);
-        } finally {
-            setLiking(false);
-        }
-    };
-
     const handleShare = () => {
         if (navigator.share) {
             navigator.share({
@@ -179,18 +135,18 @@ export default function IdeaDetailPage() {
 
     if (error || !ideaData) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-4 bg-[#0B0B0F]">
-                <h2 className="text-2xl font-bold text-white">{error || "Something went wrong"}</h2>
-                <Button onClick={() => router.push("/")} className="bg-white text-black rounded-full px-6">
-                    Go Home
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4 bg-[#050507]">
+                <h2 className="text-2xl font-light text-white">{error || "Asset not found"}</h2>
+                <Button onClick={() => router.push("/")} className="bg-white text-black rounded-lg px-6 font-medium">
+                    Return to Evaluation
                 </Button>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 min-h-screen bg-[#0B0B0F]">
-            <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
+        <div className="flex-1 min-h-screen bg-[#050507]">
+            <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
                     <Button
@@ -225,18 +181,18 @@ export default function IdeaDetailPage() {
 
                 {/* Hero Section */}
                 <div className="space-y-6">
-                    <div className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-widest">
+                    <div className="inline-flex items-center px-4 py-1.5 rounded-lg text-xs font-bold bg-white/[0.03] text-zinc-400 border border-white/[0.05] uppercase tracking-widest">
                         {ideaData.category}
                     </div>
                     {ideaData.authorUsername && (
                         <button 
                             onClick={() => router.push(`/user/${ideaData.authorUsername}`)}
-                            className="inline-flex items-center ml-4 px-3 py-1.5 rounded-full text-[10px] font-black bg-white/5 text-zinc-400 border border-white/5 hover:border-white/10 hover:text-white transition-all uppercase tracking-widest"
+                            className="inline-flex items-center ml-4 px-3 py-1.5 rounded-lg text-[10px] font-black bg-white/[0.02] text-zinc-500 border border-white/[0.03] hover:border-white/10 hover:text-white transition-all uppercase tracking-widest"
                         >
                             Builder: @{ideaData.authorUsername}
                         </button>
                     )}
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-white tracking-tight leading-tight">
                         {ideaData.title}
                     </h1>
                 </div>
@@ -244,29 +200,10 @@ export default function IdeaDetailPage() {
                 {/* Content Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
                     <div className="md:col-span-2 space-y-12">
-                        {/* The Problem */}
+                        {/* The Idea */}
                         <section className="space-y-6">
-                            <h2 className="text-2xl font-extrabold text-white flex items-center">
-                                <span className="w-10 h-10 rounded-2xl bg-[#121218] border border-white/10 flex items-center justify-center mr-4 text-sm text-zinc-400 shadow-sm">1</span>
-                                The Problem
-                            </h2>
-                            <div className="p-8 rounded-[32px] bg-[#121218] border border-white/[0.04] shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                                <p className="text-lg text-zinc-300 leading-relaxed whitespace-pre-wrap relative z-10">
-                                    {ideaData.problem}
-                                </p>
-                            </div>
-                        </section>
-
-                        {/* The Solution */}
-                        <section className="space-y-6">
-                            <h2 className="text-2xl font-extrabold text-white flex items-center">
-                                <span className="w-10 h-10 rounded-2xl bg-[#121218] border border-white/10 flex items-center justify-center mr-4 text-sm text-zinc-400 shadow-sm">2</span>
-                                The Solution
-                            </h2>
-                            <div className="p-8 rounded-[32px] bg-[#121218] border border-white/[0.04] shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                                <p className="text-lg text-white leading-relaxed whitespace-pre-wrap relative z-10 font-medium">
+                            <div className="p-8 sm:p-12 rounded-[32px] bg-[#0a0a0c] border border-white/[0.04] shadow-2xl relative overflow-hidden group">
+                                <p className="text-lg sm:text-xl text-zinc-300 leading-relaxed sm:leading-[1.8] whitespace-pre-wrap relative z-10 font-light mix-blend-screen">
                                     {ideaData.idea}
                                 </p>
                             </div>
@@ -275,33 +212,25 @@ export default function IdeaDetailPage() {
 
                     <div className="space-y-6">
                         {/* Sidebar info */}
-                        <div className="p-8 rounded-[32px] bg-[#121218] border border-white/[0.04] shadow-xl sticky top-24">
+                        <div className="p-8 rounded-[24px] bg-[#0a0a0c] border border-white/[0.04] shadow-xl sticky top-24">
                             <div>
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                                    Status
+                                <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                                    Evaluation State
                                 </h3>
-                                <div className="inline-flex items-center px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full font-semibold text-sm">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse" />
-                                    Active Discussion
+                                <div className="inline-flex items-center px-3 py-1 bg-white/[0.05] text-zinc-300 rounded-lg font-medium text-sm border border-white/[0.05]">
+                                    <span className="w-2 h-2 rounded-full bg-zinc-400 mr-2" />
+                                    Active Review
                                 </div>
                             </div>
 
-                            <div className="mt-6">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">
-                                    Engagement
+                            <div className="mt-8">
+                                <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                                    Metrics
                                 </h3>
                                 <div className="flex items-center space-x-4">
-                                    <button 
-                                        onClick={handleLike}
-                                        disabled={hasLiked || liking}
-                                        className={`flex items-center px-3 py-1.5 rounded-full transition-colors ${hasLiked ? 'bg-red-500/10 text-red-400' : 'text-zinc-300 bg-white/5 hover:bg-white/10'}`}
-                                    >
-                                        <Heart className={`w-4 h-4 mr-2 ${hasLiked ? 'fill-red-400 text-red-400' : 'text-red-400'}`} />
-                                        <span className="font-semibold">{ideaData.likesCount || 0}</span>
-                                    </button>
-                                    <div className="flex items-center text-zinc-300 bg-white/5 px-3 py-1.5 rounded-full">
-                                        <span className="mr-2">👁️</span>
-                                        <span className="font-semibold">{ideaData.views || 0}</span>
+                                    <div className="flex items-center text-zinc-300 bg-white/[0.02] border border-white/[0.05] px-3 py-1.5 rounded-lg">
+                                        <span className="text-zinc-500 mr-2 text-xs font-bold">VIEWS</span>
+                                        <span className="font-medium text-sm">{ideaData.views || 0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -318,15 +247,15 @@ export default function IdeaDetailPage() {
                                         className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-all group"
                                     >
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/5">
-                                                <Github className="w-5 h-5 text-white" />
+                                            <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center border border-white/[0.05]">
+                                                <Github className="w-5 h-5 text-zinc-300" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-white leading-tight">GitHub Repo</p>
-                                                <p className="text-[10px] text-zinc-500 font-medium">View Source Code</p>
+                                                <p className="text-sm font-medium text-white leading-tight">GitHub Repo</p>
+                                                <p className="text-[10px] text-zinc-500 font-medium">Execution Baseline</p>
                                             </div>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                             </svg>
@@ -356,9 +285,9 @@ export default function IdeaDetailPage() {
                                 </Button>
                                 <Button 
                                     onClick={() => document.getElementById('discussion')?.scrollIntoView({ behavior: 'smooth' })}
-                                    className="w-full bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 text-indigo-300 border border-indigo-500/20 rounded-full h-12 font-bold"
+                                    className="w-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border border-white/[0.05] rounded-xl h-12 font-medium"
                                 >
-                                    Ask a Question
+                                    Query Execution
                                 </Button>
                             </div>
                         </div>
@@ -366,8 +295,9 @@ export default function IdeaDetailPage() {
                 </div>
 
                 {/* Discussion / Comments Section */}
-                <div id="discussion" className="pt-16 mt-16 mb-24">
-                    <h2 className="text-3xl font-extrabold text-white mb-10 text-left">Discussion</h2>
+                <div id="discussion" className="pt-16 mt-16 mb-24 max-w-3xl mx-auto border-t border-white/[0.05]">
+                    <h2 className="text-3xl font-light text-white mb-2 text-center">Refinement Board</h2>
+                    <p className="text-zinc-500 text-sm text-center mb-10">Challenge the model, outline the risks, identify friction.</p>
                     <DiscussionSection ideaId={ideaId} />
                 </div>
             </div>
