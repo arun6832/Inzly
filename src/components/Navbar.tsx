@@ -8,7 +8,7 @@ import GlobalSearch from "./GlobalSearch";
 import { Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, Search, UserCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 export default function Navbar() {
-    const { user, userMode, signOut } = useAuth();
+    const { user, userMode, userData, signOut } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,6 +21,11 @@ export default function Navbar() {
 
     // Close menu when route changes (on click)
     const closeMenu = () => setMobileMenuOpen(false);
+
+    // Generate initials from display name stored in userData
+    const initials = userData?.name
+        ? userData.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
+        : (userData?.username?.[0] || "?").toUpperCase();
 
     return (
         <nav className={`w-full sticky top-0 z-[100] transition-all duration-300 ${scrolled ? "bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.04]" : "bg-transparent"}`}>
@@ -56,16 +61,16 @@ export default function Navbar() {
                         <div className="hidden lg:flex items-center space-x-2">
                             {user ? (
                                 <>
-                                    <div className="flex items-center px-4 h-10 bg-white/[0.03] border border-white/5 rounded-full">
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                            userMode === 'catalyst' ? 'text-emerald-400' :
-                                            userMode === 'builder' ? 'text-amber-400' :
-                                            userMode === 'sparker' ? 'text-purple-400' :
-                                            'text-blue-400'
-                                        }`}>
-                                            {userMode || 'Member'}
-                                        </span>
-                                    </div>
+                                    <Link href={`/user/${userData?.username || user?.uid}`}>
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/40 to-purple-500/40 border border-white/10 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                                            <span className="text-sm font-black text-white">{initials}</span>
+                                        </div>
+                                    </Link>
+                                    <Link href={`/user/${userData?.username || user?.uid}`}>
+                                        <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
+                                            View Profile
+                                        </Button>
+                                    </Link>
                                     <Link href="/leaderboard">
                                         <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
                                             Leaderboard
@@ -125,8 +130,11 @@ export default function Navbar() {
                     >
                         {user ? (
                             <div className="flex flex-col space-y-2">
-                                <div className="flex items-center justify-center p-4 bg-white/[0.03] border border-white/5 rounded-2xl mb-2">
-                                        <UserCircle2 className="w-5 h-5 mr-3 text-zinc-400" />
+                                <Link href={`/user/${userData?.username || user?.uid}`} onClick={closeMenu}>
+                                    <div className="flex items-center justify-center p-4 bg-white/[0.03] border border-white/5 rounded-2xl mb-2 hover:bg-white/10 transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/40 to-purple-500/40 border border-white/10 flex items-center justify-center mr-3">
+                                            <span className="text-sm font-black text-white">{initials}</span>
+                                        </div>
                                         <span className={`text-sm font-black uppercase tracking-widest ${
                                             userMode === 'catalyst' ? 'text-emerald-400' :
                                             userMode === 'builder' ? 'text-amber-400' :
@@ -135,7 +143,8 @@ export default function Navbar() {
                                         }`}>
                                             {userMode || 'Member'}
                                         </span>
-                                </div>
+                                    </div>
+                                </Link>
 
                                 <Link href="/create" onClick={closeMenu}>
                                     <Button className="w-full bg-white text-black hover:bg-zinc-200 rounded-2xl h-14 font-black text-lg gap-3">
@@ -143,7 +152,11 @@ export default function Navbar() {
                                         Post Idea
                                     </Button>
                                 </Link>
-                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
+                                    <Link href={`/user/${userData?.username || user?.uid}`} onClick={closeMenu} className="flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.04] text-zinc-400 hover:text-white">
+                                        <UserCircle2 className="w-6 h-6 mb-2" />
+                                        <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
+                                    </Link>
                                     <Link href="/messages" onClick={closeMenu} className="flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.04] text-zinc-400 hover:text-white">
                                         <MessageSquare className="w-6 h-6 mb-2" />
                                         <span className="text-xs font-bold uppercase tracking-widest">Chats</span>

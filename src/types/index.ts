@@ -6,6 +6,7 @@ export interface User {
     email: string;
     username?: string;
     mode: UserMode;
+    photoURL?: string;
     // other fields...
 }
 

@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 interface AuthContextType {
     user: User | null;
     userMode: string;
+    userData: any | null; // additional firestore data
     loading: boolean;
     signOut: () => Promise<void>;
     updateUserMode: (mode: string) => Promise<void>;
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [userMode, setUserMode] = useState<string>("explorer");
+    const [userData, setUserData] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -40,15 +42,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (user) {
                     userUnsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                        if (docSnap.exists() && docSnap.data().mode) {
-                            setUserMode(docSnap.data().mode);
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            setUserMode(data.mode || "explorer");
+                            setUserData(data);
                         } else {
                             setUserMode("explorer");
+                            setUserData(null);
                         }
                     });
                 } else {
                     if (userUnsub) userUnsub();
                     setUserMode("explorer");
+                    setUserData(null);
                 }
 
                 const elapsed = Date.now() - startTime;
@@ -95,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, userMode, loading, signOut, updateUserMode }}>
+        <AuthContext.Provider value={{ user, userMode, userData, loading, signOut, updateUserMode }}>
             {loading ? (
                 <div className="min-h-screen bg-[#050507]" />
             ) : (

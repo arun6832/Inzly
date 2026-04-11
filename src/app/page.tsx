@@ -193,7 +193,7 @@ export default function Home() {
           <div className="absolute right-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.02] to-transparent block xl:hidden"></div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-[1400px] mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-none 2xl:px-16 mx-auto px-4 lg:px-8">
           
           {/* Left Column: The Innovator Nexus (Desktop Only) */}
           <motion.div 
@@ -263,7 +263,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1 w-full relative flex items-center justify-center"
+              className="flex-1 w-full max-w-[420px] mx-auto relative flex items-center justify-center"
             >
               {previewIdea ? (
                 <PreviewSwipeCard idea={previewIdea} />
@@ -504,7 +504,7 @@ export default function Home() {
       {/* Hero Feed Section with 3-Column Layout on Desktop */}
       <div className="w-full relative flex-1 flex flex-col items-center justify-start z-10 pt-8 sm:pt-12 pb-16">
         
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-[1400px] mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-none 2xl:px-16 mx-auto px-4 lg:px-8">
           
           {/* Left Sidebar: Platform Pulse (Tablet & Desktop) */}
           <motion.div 
