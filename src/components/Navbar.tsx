@@ -5,14 +5,16 @@ import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "./ui/button";
 import GlobalSearch from "./GlobalSearch";
-import { Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, Search, UserCircle2 } from "lucide-react";
+import { Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, Search, UserCircle2, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 export default function Navbar() {
     const { user, userMode, userData, signOut } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
         handleScroll();
@@ -27,8 +29,10 @@ export default function Navbar() {
         ? userData.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
         : (userData?.username?.[0] || "?").toUpperCase();
 
+    const isScrolled = mounted && scrolled;
+
     return (
-        <nav className={`w-full sticky top-0 z-[100] transition-all duration-300 ${scrolled ? "bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.04]" : "bg-transparent"}`}>
+        <nav className={`w-full sticky top-0 z-[100] transition-all duration-300 ${isScrolled ? "bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.04]" : "bg-transparent"}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className={`flex justify-between items-center transition-all duration-300 ${scrolled ? "h-14" : "h-20"}`}>
                     <Link href="/" className="flex items-center space-x-3 group shrink-0" onClick={closeMenu}>
@@ -71,6 +75,12 @@ export default function Navbar() {
                                             View Profile
                                         </Button>
                                     </Link>
+                                    <Link href="/map">
+                                        <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium flex items-center gap-1.5">
+                                            <MapPin className="w-3.5 h-3.5" />
+                                            Map
+                                        </Button>
+                                    </Link>
                                     <Link href="/leaderboard">
                                         <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
                                             Leaderboard
@@ -97,6 +107,12 @@ export default function Navbar() {
                                 </>
                             ) : (
                                 <>
+                                    <Link href="/map">
+                                        <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium flex items-center gap-1.5">
+                                            <MapPin className="w-3.5 h-3.5" />
+                                            Map
+                                        </Button>
+                                    </Link>
                                     <Link href="/leaderboard">
                                         <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-5 h-10 font-medium">
                                             Leaderboard

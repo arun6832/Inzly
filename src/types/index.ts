@@ -7,7 +7,14 @@ export interface User {
     username?: string;
     mode: UserMode;
     photoURL?: string;
-    // other fields...
+}
+
+export interface IdeaLocation {
+    city: string;
+    area?: string;
+    lat: number;
+    lng: number;
+    geohash: string;
 }
 
 export interface Idea {
@@ -17,8 +24,12 @@ export interface Idea {
     category: string;
     userId: string;
     authorUsername?: string;
-    likesCount?: number; // keeping this for schema, but UI won't show it much
+    likesCount?: number;
     views?: number;
     githubUrl?: string;
     createdAt?: { toDate?: () => Date } | Date | number | string;
+    // Map feature fields
+    location?: IdeaLocation;
+    visibility?: "public" | "private" | "investor";
+    engagementScore?: number;
 }

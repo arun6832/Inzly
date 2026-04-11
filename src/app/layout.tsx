@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="antialiased dark hide-scrollbar">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-indigo-500/30 hide-scrollbar`}>
+    <html lang="en" className="antialiased dark hide-scrollbar" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-indigo-500/30 hide-scrollbar`} suppressHydrationWarning>
         <AuthProvider>
           <Navbar />
           <main className="flex-1 w-full relative flex flex-col">
