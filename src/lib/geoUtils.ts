@@ -124,3 +124,47 @@ export function normalizeScores(zones: HotZone[]): (HotZone & { normalized: numb
     const max = Math.max(...zones.map(z => z.hotnessScore), 1);
     return zones.map(z => ({ ...z, normalized: z.hotnessScore / max }));
 }
+
+/** Get current user location via Browser API */
+export function getCurrentLocation(): Promise<{ lat: number; lng: number }> {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error("Geolocation is not supported by your browser."));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                resolve({
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                });
+            },
+            (err) => {
+                reject(err);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0,
+            }
+        );
+    });
+}
+
+/** Map coordinates to the nearest predefined city */
+export function getNearestCity(lat: number, lng: number): string {
+    let nearestCity = CITY_CENTERS[0].name;
+    let minDistance = Infinity;
+
+    for (const city of CITY_CENTERS) {
+        const distance = calculateDistance(lat, lng, city.lat, city.lng);
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearestCity = city.name;
+        }
+    }
+
+    return nearestCity;
+}
+

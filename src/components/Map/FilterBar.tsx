@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Globe, Building2, Navigation } from "lucide-react";
 
 export type FilterMode = "global" | "city" | "nearby";
-export type RadiusKm = 5 | 10 | 25;
+export type RadiusKm = 5 | 10 | 25 | "25+";
 
 interface Props {
     mode: FilterMode;
@@ -15,7 +15,7 @@ interface Props {
     onRadiusChange: (radius: RadiusKm) => void;
 }
 
-const RADII: RadiusKm[] = [5, 10, 25];
+const RADII: RadiusKm[] = [5, 10, 25, "25+"];
 
 export default function FilterBar({ mode, radius, city, hasLocation, onModeChange, onRadiusChange }: Props) {
     return (
@@ -23,7 +23,7 @@ export default function FilterBar({ mode, radius, city, hasLocation, onModeChang
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4"
+            className="absolute top-16 lg:top-24 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center px-4"
         >
             <div
                 className="flex items-center gap-1 p-1 rounded-2xl"
@@ -36,40 +36,38 @@ export default function FilterBar({ mode, radius, city, hasLocation, onModeChang
                 {/* Global */}
                 <button
                     onClick={() => onModeChange("global")}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                        mode === "global"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${mode === "global"
                             ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
                             : "text-zinc-500 hover:text-zinc-300"
-                    }`}
+                        }`}
                 >
                     <Globe className="w-3.5 h-3.5" />
                     Global
+                    <span className="ml-1 px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/10 text-[9px] text-amber-400 tracking-wider">PRO</span>
                 </button>
 
                 {/* My City */}
                 <button
                     onClick={() => onModeChange("city")}
                     disabled={!city}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                        mode === "city"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${mode === "city"
                             ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                             : "text-zinc-500 hover:text-zinc-300"
-                    }`}
+                        }`}
                     title={!city ? "Location not available" : `Filter to ${city}`}
                 >
                     <Building2 className="w-3.5 h-3.5" />
-                    {city ? city : "My City"}
+                    My City
                 </button>
 
                 {/* Nearby */}
                 <button
                     onClick={() => onModeChange("nearby")}
                     disabled={!hasLocation}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                        mode === "nearby"
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${mode === "nearby"
                             ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                             : "text-zinc-500 hover:text-zinc-300"
-                    }`}
+                        }`}
                     title={!hasLocation ? "Enable location access" : "Filter by distance"}
                 >
                     <Navigation className="w-3.5 h-3.5" />
@@ -93,13 +91,12 @@ export default function FilterBar({ mode, radius, city, hasLocation, onModeChang
                         <button
                             key={r}
                             onClick={() => onRadiusChange(r)}
-                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                                radius === r
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${radius === r
                                     ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                                     : "text-zinc-500 hover:text-zinc-300"
-                            }`}
+                                }`}
                         >
-                            {r}km
+                            {r}{typeof r === "number" ? "km" : " km"}
                         </button>
                     ))}
                 </motion.div>

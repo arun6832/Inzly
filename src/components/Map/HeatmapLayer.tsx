@@ -6,6 +6,18 @@ import L from "leaflet";
 import "leaflet.heat";
 import { HotZone } from "@/lib/geoUtils";
 
+if (typeof window !== "undefined") {
+    // Suppress "Canvas2D: Multiple readback operations..." warning from leaflet.heat
+    // by injecting willReadFrequently: true into all 2d contexts on the client.
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    (HTMLCanvasElement as any).prototype.getContext = function(type: string, attributes?: any) {
+        if (type === '2d') {
+            attributes = { ...attributes, willReadFrequently: true };
+        }
+        return originalGetContext.call(this, type, attributes);
+    };
+}
+
 interface HeatmapLayerProps {
     points: [number, number, number][]; // [lat, lng, intensity]
 }
@@ -24,15 +36,14 @@ export default function HeatmapLayer({ points }: HeatmapLayerProps) {
         // We cast L to any to avoid TypeScript errors since leaflet.heat 
         // doesn't have official TS types.
         const heatLayer = (L as any).heatLayer(points, {
-            radius: 35,
-            blur: 25,
+            radius: 40,
+            blur: 30,
             maxZoom: 15,
             gradient: {
-                0.2: '#4f46e5', // Indigo
-                0.4: '#7c3aed', // Purple
-                0.6: '#a855f7', // Electric Purple
-                0.8: '#ec4899', // Pink
-                1.0: '#ef4444', // Red (Tactical Heat)
+                0.2: '#00ff00', // Green
+                0.5: '#ffff00', // Yellow
+                0.8: '#ff8c00', // Orange
+                1.0: '#ff0000', // Red
             }
         }).addTo(map);
 

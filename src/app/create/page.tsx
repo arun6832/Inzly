@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link";
 import { containsSpam } from "@/lib/filter";
 import { Github } from "@/components/icons";
+import { getCurrentLocation, getNearestCity, encodeGeohash } from "@/lib/geoUtils";
 
 const CATEGORIES = [
     "SaaS",
@@ -38,6 +39,20 @@ export default function CreateIdeaPage() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; city: string } | null>(null);
+
+    useEffect(() => {
+        const fetchLocation = async () => {
+            try {
+                const pos = await getCurrentLocation();
+                const city = getNearestCity(pos.lat, pos.lng);
+                setUserLocation({ ...pos, city });
+            } catch (err) {
+                console.error("Auto-location failed:", err);
+            }
+        };
+        fetchLocation();
+    }, []);
 
     if (loading) {
         return <div className="flex-1 flex justify-center items-center">Loading...</div>;
@@ -70,6 +85,20 @@ export default function CreateIdeaPage() {
             return;
         }
 
+        let loc = userLocation;
+        if (!loc) {
+            try {
+                const pos = await getCurrentLocation();
+                const city = getNearestCity(pos.lat, pos.lng);
+                loc = { ...pos, city };
+                setUserLocation(loc);
+            } catch (err) {
+                setError("Location access is required to post an idea. Please enable location permissions in your browser.");
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
         try {
             await addDoc(collection(db, "ideas"), {
                 title,
@@ -78,6 +107,13 @@ export default function CreateIdeaPage() {
                 githubUrl: githubUrl.trim() || null,
                 userId: user.uid,
                 createdAt: serverTimestamp(),
+                location: {
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    city: loc.city,
+                    geohash: encodeGeohash(loc.lat, loc.lng)
+                },
+                visibility: "public"
             });
             router.push("/");
         } catch (err) {

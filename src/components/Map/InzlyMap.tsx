@@ -45,10 +45,10 @@ function BoundsWatcher({ onBoundsChange }: { onBoundsChange: (bounds: any) => vo
     return null;
 }
 
-// Recenter map exactly once when location is found, or when forced via button
-function MapRecenter({ center }: { center: [number, number] }) {
+// Controls map zoom and bounds dynamically based on mode and radius
+function MapController({ center, mode, radius }: { center: [number, number], mode: FilterMode, radius: RadiusKm }) {
     const map = useMapEvents({});
-    const zoomedRef = useRef(false);
+    const initializedRef = useRef(false);
 
     useEffect(() => {
         const handleRecenter = () => {
@@ -59,13 +59,36 @@ function MapRecenter({ center }: { center: [number, number] }) {
 
         window.addEventListener("recenter-map", handleRecenter);
 
-        if (center && !zoomedRef.current && center[0] !== DEFAULT_CENTER[0]) {
-            map.setView(center, 14, { animate: true });
-            zoomedRef.current = true;
-        }
-
         return () => window.removeEventListener("recenter-map", handleRecenter);
     }, [center, map]);
+
+    useEffect(() => {
+        if (!center || center[0] === DEFAULT_CENTER[0]) return;
+        
+        // Initial setup zooms to user location
+        if (!initializedRef.current) {
+             map.setView(center, 14, { animate: true });
+             initializedRef.current = true;
+             return; 
+        }
+
+        // Dynamically adjust map view based on filter bounds
+        if (mode === "nearby") {
+             const effectiveRadius = radius === "25+" ? 75 : radius;
+             const degLat = effectiveRadius / 111;
+             const degLng = effectiveRadius / (111 * Math.cos(center[0] * (Math.PI / 180)));
+             const bounds = L.latLngBounds(
+                 [center[0] - degLat, center[1] - degLng],
+                 [center[0] + degLat, center[1] + degLng]
+             );
+             map.flyToBounds(bounds, { animate: true, duration: 1.0 });
+        } else if (mode === "city") {
+             map.flyTo(center, 12, { animate: true, duration: 1.0 });
+        } else if (mode === "global") {
+             map.flyTo(center, 3, { animate: true, duration: 1.5 });
+        }
+    }, [center, mode, radius, map]);
+
     return null;
 }
 
@@ -74,8 +97,8 @@ export default function InzlyMap() {
     const [hotZones, setHotZones] = useState<ReturnType<typeof normalizeScores>>([]);
     const [selectedIdea, setSelectedIdea] = useState<MapIdea | null>(null);
     const [loading, setLoading] = useState(true);
-    const [filterMode, setFilterMode] = useState<FilterMode>("global");
-    const [radius, setRadius] = useState<RadiusKm>(10);
+    const [filterMode, setFilterMode] = useState<FilterMode>("nearby");
+    const [radius, setRadius] = useState<RadiusKm>("25+");
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [userCity, setUserCity] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
@@ -130,20 +153,12 @@ export default function InzlyMap() {
 
             // Apply filter
             if (mode === "global") {
-                if (userLoc) {
-                    // Strictly show ideas within 75km of the user
-                    const bbox = getBoundingBox(userLoc.lat, userLoc.lng, 75);
-                    raw = raw.filter(
-                        i =>
-                            i.lat >= bbox.minLat && i.lat <= bbox.maxLat &&
-                            i.lng >= bbox.minLng && i.lng <= bbox.maxLng
-                    );
-                }
-                // If no location yet, show all public ideas as a placeholder
+                // World wide search - no distance restrictions applied for PRO users
             } else if (mode === "city" && userCity) {
                 raw = raw.filter(i => i.city === userCity);
             } else if (mode === "nearby" && userLoc) {
-                const bbox = getBoundingBox(userLoc.lat, userLoc.lng, radiusKm);
+                const effectiveRadius = radiusKm === "25+" ? 75 : (radiusKm as number);
+                const bbox = getBoundingBox(userLoc.lat, userLoc.lng, effectiveRadius);
                 raw = raw.filter(
                     i =>
                         i.lat >= bbox.minLat && i.lat <= bbox.maxLat &&
@@ -254,8 +269,10 @@ export default function InzlyMap() {
                 />
 
                 <BoundsWatcher onBoundsChange={() => {}} />
-                <MapRecenter 
+                <MapController 
                     center={mapCenter} 
+                    mode={filterMode}
+                    radius={radius}
                 />
 
                 {/* Tactical Innovation Heatmap */}
@@ -263,7 +280,7 @@ export default function InzlyMap() {
                     points={hotZones.map(z => [z.lat, z.lng, z.normalized * 0.8])} 
                 />
 
-                {/* Red Radar — User Location */}
+                {/* User Location Radar */}
                 {userLocation && (
                     <>
                         <CircleMarker 
@@ -271,26 +288,43 @@ export default function InzlyMap() {
                             radius={10}
                             className="radar-user-marker"
                             pathOptions={{
-                                fillColor: "#ef4444",
+                                fillColor: filterMode === "nearby" ? "#a855f7" : "#ef4444",
                                 fillOpacity: 1,
                                 color: "#fff",
                                 weight: 2,
                             }}
                         />
-                        {/* 75km Discovery Bubble visualization */}
-                        <Circle 
-                            center={[userLocation.lat, userLocation.lng]} 
-                            radius={75000} // 75km
-                            pathOptions={{
-                                color: "#ef4444",
-                                weight: 2,
-                                fillColor: "#ef4444",
-                                fillOpacity: 0.08,
-                                opacity: 0.5,
-                                dashArray: "10 10",
-                            }}
-                            interactive={false}
-                        />
+                        {/* Discovery Bubble visualization */}
+                        {filterMode === "global" && (
+                            <Circle 
+                                center={[userLocation.lat, userLocation.lng]} 
+                                radius={75000} // 75km
+                                pathOptions={{
+                                    color: "#ef4444",
+                                    weight: 2,
+                                    fillColor: "#ef4444",
+                                    fillOpacity: 0.08,
+                                    opacity: 0.5,
+                                    dashArray: "10 10",
+                                }}
+                                interactive={false}
+                            />
+                        )}
+                        {filterMode === "nearby" && (
+                            <Circle 
+                                center={[userLocation.lat, userLocation.lng]} 
+                                radius={(radius === "25+" ? 75 : radius) * 1000} // radius km to meters
+                                pathOptions={{
+                                    color: "#a855f7",
+                                    weight: 2,
+                                    fillColor: "#a855f7",
+                                    fillOpacity: 0.08,
+                                    opacity: 0.5,
+                                    dashArray: "10 10",
+                                }}
+                                interactive={false}
+                            />
+                        )}
                     </>
                 )}
 
