@@ -54,6 +54,31 @@ export interface HotZone {
     geohashCell: string;
 }
 
+export type ExecutionStatus = 'Thinking' | 'Refining' | 'Building' | 'Launched';
+
+export interface Problem {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    userId: string;
+    authorUsername?: string;
+    lat: number;
+    lng: number;
+    city: string;
+    status: 'open' | 'solved';
+    createdAt: any;
+}
+
+export interface IdeaVersion {
+    id: string;
+    versionNumber: number;
+    titleSnapshot: string;
+    descriptionSnapshot: string;
+    changelog: string;
+    timestamp: any;
+}
+
 export interface MapIdea {
     id: string;
     title: string;
@@ -66,6 +91,10 @@ export interface MapIdea {
     likesCount: number;
     views: number;
     authorUsername?: string;
+    problemId?: string | null;
+    executionStatus?: ExecutionStatus;
+    currentVersion?: number;
+    type?: 'idea' | 'problem';
 }
 
 /**
