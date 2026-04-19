@@ -1,9 +1,9 @@
-"use client";
-
-import { X, ExternalLink, MapPin, Heart, Eye } from "lucide-react";
+import { X, ExternalLink, MapPin, Heart, Eye, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MapIdea } from "@/lib/geoUtils";
+import { useAuth } from "@/lib/AuthContext";
 
 const CATEGORY_COLORS: Record<string, string> = {
     "AI/ML": "#6366f1",
@@ -22,8 +22,30 @@ interface Props {
 }
 
 export default function IdeaPreviewCard({ idea, onClose }: Props) {
+    const router = useRouter();
+    const { user } = useAuth();
+    
     const isProblem = idea?.type === 'problem';
     const color = idea ? (isProblem ? "#a855f7" : (CATEGORY_COLORS[idea.category] || "#6366f1")) : "#6366f1";
+
+    const isOwner = user?.uid === idea?.userId;
+
+    const handleMessage = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        if (!idea) return;
+        
+        try {
+            const { getOrCreateChat } = await import("@/lib/messaging");
+            const chatId = await getOrCreateChat(user.uid, idea.userId);
+            router.push(`/messages/${chatId}`);
+        } catch (err) {
+            console.error("Failed to start chat:", err);
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -87,7 +109,7 @@ export default function IdeaPreviewCard({ idea, onClose }: Props) {
 
                             {/* Stats + CTA */}
                             <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                <div className="flex items-center gap-5">
+                                <div className="flex items-center gap-4">
                                     {!isProblem ? (
                                         <>
                                             <div className="flex items-center gap-1.5 text-zinc-500">
@@ -107,17 +129,28 @@ export default function IdeaPreviewCard({ idea, onClose }: Props) {
                                     )}
                                 </div>
                                 
-                                <Link
-                                    href={isProblem ? `/create?problemId=${idea.id}` : `/idea/${idea.id}`}
-                                    className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl transition-all shadow-lg ${
-                                        isProblem 
-                                        ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-500/20' 
-                                        : 'bg-white text-black hover:bg-zinc-200 shadow-white/10'
-                                    }`}
-                                >
-                                    {isProblem ? 'Solve Problem' : 'Refine Hub'} 
-                                    <ExternalLink className="w-3 h-3" />
-                                </Link>
+                                <div className="flex items-center gap-3">
+                                    {!isOwner && (
+                                        <button
+                                            onClick={handleMessage}
+                                            className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all shadow-lg"
+                                            title="Message Architect"
+                                        >
+                                            <MessageSquare className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <Link
+                                        href={isProblem ? `/create?problemId=${idea.id}` : `/idea/${idea.id}`}
+                                        className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-xl transition-all shadow-lg ${
+                                            isProblem 
+                                            ? 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-500/20' 
+                                            : 'bg-white text-black hover:bg-zinc-200 shadow-white/10'
+                                        }`}
+                                    >
+                                        {isProblem ? 'Solve Problem' : 'Refine Hub'} 
+                                        <ExternalLink className="w-3 h-3" />
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -134,6 +134,15 @@ function buildNotionProperties(testCase: TestCase) {
         name: 'Not started',
       },
     },
+    'Description': {
+      rich_text: [
+        {
+          text: {
+            content: testCase.description || '',
+          },
+        },
+      ],
+    },
     'Priority': {
       select: {
         name: testCase.priority || 'Medium',

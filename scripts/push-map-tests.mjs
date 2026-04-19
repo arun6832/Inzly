@@ -9,16 +9,19 @@ const testCases = [
   {
     title: "Map 25+ km bounds loading",
     feature: "Map",
+    description: "Verify that the map correctly loads all points within the extended 75km discovery bubble.",
     priority: "High",
   },
   {
     title: "Global filter unlocks bounds & zooms",
     feature: "Map",
+    description: "Ensure that switching to Global mode removes distance restrictions and shows worldwide innovation nodes.",
     priority: "High",
   },
   {
     title: "Snapchat aesthetic heatmap rendering",
     feature: "Map",
+    description: "Validation of the hot-zone visualization aesthetic and high-intensity cluster rendering.",
     priority: "High",
   }
 ];
@@ -29,6 +32,7 @@ function buildNotionProperties(testCase) {
     'Test Type': { select: { name: 'Functional Testing' } },
     'Environment': { select: { name: 'Staging' } },
     'Status': { status: { name: 'Not started' } },
+    'Description': { rich_text: [{ text: { content: testCase.description || '' } }] },
     'Priority': { select: { name: testCase.priority || 'Medium' } },
     'Build Version': { rich_text: [{ text: { content: 'v1.0.0' } }] },
     'Last Run Date': { date: { start: new Date().toISOString() } }

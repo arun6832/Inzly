@@ -11,6 +11,9 @@ import { useAuth } from "@/lib/AuthContext";
 import { ExecutionStatus, IdeaVersion, Problem } from "@/lib/geoUtils";
 import DiscussionSection from "@/components/DiscussionSection";
 import TeamManagement from "@/components/TeamManagement";
+import SoftNDAModal from "@/components/SoftNDAModal";
+import ReportModal from "@/components/ReportModal";
+import { Lock, Eye, ShieldCheck, Flag, MessageSquare } from "lucide-react";
 
 interface Idea {
     id: string;
@@ -25,6 +28,7 @@ interface Idea {
     problemId?: string | null;
     executionStatus?: ExecutionStatus;
     currentVersion?: number;
+    visibility?: "public" | "restricted" | "investor";
 }
 
 export default function IdeaDetailPage() {
@@ -42,6 +46,14 @@ export default function IdeaDetailPage() {
     const [saving, setSaving] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
     const [joinStatus, setJoinStatus] = useState<'none' | 'pending' | 'approved'>('none');
+
+    // Trust System State
+    const [accessGranted, setAccessGranted] = useState(false);
+    const [ndaAccepted, setNdaAccepted] = useState(false);
+    const [accessRequestStatus, setAccessRequestStatus] = useState<'none' | 'pending' | 'rejected'>('none');
+    const [showNDA, setShowNDA] = useState(false);
+    const [showReport, setShowReport] = useState(false);
+    const [requestingAccess, setRequestingAccess] = useState(false);
 
     const ideaId = params.id as string;
 
@@ -82,6 +94,15 @@ export default function IdeaDetailPage() {
                     const versionsSnap = await getDocs(versionsQ);
                     setVersions(versionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as IdeaVersion)));
 
+                    // Audit Trail: Log View
+                    if (user) {
+                        addDoc(collection(db, "idea_views"), {
+                            userId: user.uid,
+                            ideaId,
+                            timestamp: serverTimestamp()
+                        }).catch(e => console.error(e));
+                    }
+
                     // Increment views
                     updateDoc(docRef, { views: increment(1) }).catch(e => console.error(e));
                 } else {
@@ -116,11 +137,91 @@ export default function IdeaDetailPage() {
                 if (!joinSnap.empty) {
                     setJoinStatus(joinSnap.docs[0].data().status as any);
                 }
+
+                // Trust System status checks
+                const ndaQ = query(collection(db, "nda_acceptance"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
+                const ndaSnap = await getDocs(ndaQ);
+                if (!ndaSnap.empty) setNdaAccepted(true);
+
+                const accessQ = query(collection(db, "access_requests"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
+                const accessSnap = await getDocs(accessQ);
+                if (!accessSnap.empty) {
+                    const status = accessSnap.docs[0].data().status;
+                    setAccessRequestStatus(status);
+                    if (status === 'approved') setAccessGranted(true);
+                }
             } catch (e) { console.error(e); }
         };
 
         checkStatus();
     }, [user, ideaId]);
+
+    // Visibility Logic
+    useEffect(() => {
+        if (!ideaData) return;
+        
+        const isOwner = user?.uid === ideaData.userId;
+        const isInvestor = user && (user as any).mode === 'catalyst'; // Cast as any because AuthContext User might not have mode directly if not synced
+
+        if (ideaData.visibility === 'public' || isOwner) {
+            setAccessGranted(true);
+        } else if (ideaData.visibility === 'investor' && isInvestor) {
+            setAccessGranted(true);
+        }
+        
+        // Soft NDA logic
+        if (ideaData.visibility !== 'public' && !ndaAccepted && !isOwner) {
+            // We only show NDA if access is already granted (approved or investor)
+            const canSeeNDA = (ideaData.visibility === 'investor' && isInvestor) || accessGranted;
+            if (canSeeNDA) {
+                setShowNDA(true);
+            }
+        }
+    }, [ideaData, user, ndaAccepted, accessGranted]);
+
+    const handleAcceptNDA = async () => {
+        if (!user || !ideaId) return;
+        try {
+            await addDoc(collection(db, "nda_acceptance"), {
+                userId: user.uid,
+                ideaId,
+                timestamp: serverTimestamp()
+            });
+            setNdaAccepted(true);
+            setShowNDA(false);
+        } catch (e) { console.error(e); }
+    };
+
+    const handleRequestAccess = async () => {
+        if (!user || !ideaId || requestingAccess) return;
+        setRequestingAccess(true);
+        try {
+            await addDoc(collection(db, "access_requests"), {
+                userId: user.uid,
+                ideaId,
+                status: 'pending',
+                timestamp: serverTimestamp()
+            });
+            setAccessRequestStatus('pending');
+        } catch (e) { console.error(e); } finally {
+            setRequestingAccess(false);
+        }
+    };
+
+    const handleReport = async (reason: string, description: string) => {
+        if (!user || !ideaId) return;
+        try {
+            await addDoc(collection(db, "reports"), {
+                reporterId: user.uid,
+                reportedUserId: ideaData?.userId,
+                ideaId,
+                reason,
+                description,
+                timestamp: serverTimestamp()
+            });
+            alert("Security team notified. Thank you.");
+        } catch (e) { console.error(e); }
+    };
 
     const handleJoinRequest = async () => {
         if (!user || !ideaData || isJoining || joinStatus !== 'none') return;
@@ -227,6 +328,27 @@ export default function IdeaDetailPage() {
                         >
                             <Share2 className="w-5 h-5" />
                         </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={async () => {
+                                if (!user) { router.push('/login'); return; }
+                                const { getOrCreateChat } = await import("@/lib/messaging");
+                                const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                router.push(`/messages/${chatId}`);
+                            }}
+                            className="w-12 h-12 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
+                        >
+                            <MessageSquare className="w-5 h-5" />
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setShowReport(true)}
+                            className="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 text-red-400/50 hover:text-red-400 transition-all hover:bg-red-500/10"
+                        >
+                            <Flag className="w-5 h-5" />
+                        </Button>
                     </div>
                 </div>
 
@@ -242,6 +364,16 @@ export default function IdeaDetailPage() {
                         </div>
                         <div className="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black bg-white/[0.02] text-zinc-500 border border-white/[0.05] uppercase tracking-[0.2em]">
                             Version v{ideaData.currentVersion || 1}
+                        </div>
+                        
+                        {/* Visibility Badge */}
+                        <div className={`inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black border uppercase tracking-[0.2em] shadow-lg shadow-black/20 ${
+                            ideaData.visibility === 'public' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+                            ideaData.visibility === 'restricted' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
+                            'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                        }`}>
+                            {ideaData.visibility === 'public' ? <Eye className="w-3 h-3 mr-2" /> : <Lock className="w-3 h-3 mr-2" />}
+                            {ideaData.visibility === 'public' ? 'Public Domain' : ideaData.visibility === 'restricted' ? 'Restricted Access' : 'Investor Verified'}
                         </div>
                     </div>
 
@@ -308,9 +440,47 @@ export default function IdeaDetailPage() {
                             </div>
                             <div className="p-8 sm:p-12 rounded-[40px] bg-[#0a0a0c] border border-white/[0.04] shadow-2xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-                                <p className="text-lg sm:text-2xl text-zinc-300 leading-relaxed sm:leading-[1.8] whitespace-pre-wrap relative z-10 font-normal tracking-tight">
-                                    {ideaData.idea}
-                                </p>
+                                
+                                {!accessGranted ? (
+                                    <div className="relative z-10 flex flex-col items-center justify-center py-20 text-center space-y-6">
+                                        <div className="w-16 h-16 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                                            <Lock className="w-8 h-8 text-orange-400" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h4 className="text-xl font-bold text-white">Restricted Concept</h4>
+                                            <p className="text-sm text-zinc-500 max-w-sm">The architect has restricted access to this concept. You must request permission to view the execution plan.</p>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+                                            <Button 
+                                                onClick={handleRequestAccess}
+                                                disabled={accessRequestStatus !== 'none' || requestingAccess}
+                                                className="flex-1 bg-white text-black hover:bg-zinc-200 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]"
+                                            >
+                                                {requestingAccess ? 'transmitting...' : 
+                                                 accessRequestStatus === 'pending' ? 'Request Pending' : 
+                                                 accessRequestStatus === 'rejected' ? 'Access Denied' : 
+                                                 'Request Access'}
+                                            </Button>
+                                            <Button 
+                                                variant="outline"
+                                                onClick={async () => {
+                                                    if (!user) { router.push('/login'); return; }
+                                                    const { getOrCreateChat } = await import("@/lib/messaging");
+                                                    const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                                    router.push(`/messages/${chatId}`);
+                                                }}
+                                                className="flex-1 bg-white/5 border-white/10 text-white rounded-xl h-12 font-bold uppercase tracking-widest text-[10px] hover:bg-white/10"
+                                            >
+                                                <MessageSquare className="w-3.5 h-3.5 mr-2" />
+                                                Message
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-lg sm:text-2xl text-zinc-300 leading-relaxed sm:leading-[1.8] whitespace-pre-wrap relative z-10 font-normal tracking-tight">
+                                        {ideaData.idea}
+                                    </p>
+                                )}
                             </div>
                         </section>
 
@@ -423,7 +593,7 @@ export default function IdeaDetailPage() {
                                         variant="ghost" 
                                         className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-2xl"
                                     >
-                                        Inquire via Sync
+                                        Message Architect
                                     </Button>
                                     
                                     {joinStatus === 'approved' && (
@@ -499,6 +669,19 @@ export default function IdeaDetailPage() {
                         <DiscussionSection ideaId={ideaId} />
                     </div>
                 </div>
+
+                {/* Trust System Modals */}
+                <SoftNDAModal 
+                    isOpen={showNDA} 
+                    onAccept={handleAcceptNDA} 
+                    ideaTitle={ideaData.title} 
+                />
+                <ReportModal 
+                    isOpen={showReport} 
+                    onClose={() => setShowReport(false)} 
+                    onSubmit={handleReport} 
+                    ideaTitle={ideaData.title} 
+                />
             </div>
         </div>
     );

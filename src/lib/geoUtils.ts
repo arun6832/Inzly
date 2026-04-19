@@ -90,6 +90,7 @@ export interface MapIdea {
     engagementScore: number;
     likesCount: number;
     views: number;
+    userId: string;
     authorUsername?: string;
     problemId?: string | null;
     executionStatus?: ExecutionStatus;

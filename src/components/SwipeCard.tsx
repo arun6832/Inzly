@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, useMotionValue, useTransform, animate, PanInfo } from "framer-motion";
 import { Button } from "./ui/button";
-import { X, Heart, ExternalLink, MessageSquare, User } from "lucide-react";
+import { X, Heart, ExternalLink, MessageSquare, User, Lock, Eye, Flag, ShieldAlert } from "lucide-react";
 import { Github } from "@/components/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ interface Idea {
     views?: number;
     githubUrl?: string;
     authorUsername?: string;
+    visibility?: "public" | "restricted" | "investor";
 }
 
 interface SwipeCardProps {
@@ -165,6 +166,16 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                                 {idea.authorUsername}
                             </button>
                         )}
+                        
+                        {/* Visibility Badge */}
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-lg shadow-black/20 ${
+                            idea.visibility === 'public' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+                            idea.visibility === 'restricted' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
+                            'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                        }`}>
+                            {idea.visibility === 'public' ? <Eye className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                            {idea.visibility === 'public' ? 'Public' : idea.visibility === 'restricted' ? 'Restricted' : 'Investor'}
+                        </div>
                     </div>
                     <div className="flex items-center space-x-3 text-zinc-400 text-sm font-medium">
                         <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
@@ -241,6 +252,19 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                         className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08]"
                     >
                         <MessageSquare className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                        size="icon" 
+                        variant="ghost"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!active) return;
+                            alert("Reporting system active. Visit idea detail to file a priority report.");
+                        }}
+                        className="text-red-500/40 hover:text-red-400 hover:bg-red-500/10 rounded-full h-10 w-10"
+                        title="Report Misuse"
+                    >
+                        <Flag className="w-4 h-4" />
                     </Button>
                 </div>
 

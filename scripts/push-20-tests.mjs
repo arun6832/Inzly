@@ -215,6 +215,7 @@ function buildNotionProperties(testCase) {
     'Test Type': { select: { name: testCase.feature === 'Dashboard' ? 'UI Testing' : 'Functional Testing' } },
     'Environment': { select: { name: 'Staging' } },
     'Status': { status: { name: 'Not started' } },
+    'Description': { rich_text: [{ text: { content: testCase.description || '' } }] },
     'Priority': { select: { name: testCase.priority || 'Medium' } },
     'Build Version': { rich_text: [{ text: { content: 'v1.0.0' } }] },
     'Last Run Date': { date: { start: new Date().toISOString() } }

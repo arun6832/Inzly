@@ -38,6 +38,7 @@ export default function CreateIdeaPage() {
     const [category, setCategory] = useState("");
     const [githubUrl, setGithubUrl] = useState("");
     const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>("Thinking");
+    const [visibility, setVisibility] = useState<"public" | "restricted" | "investor">("public");
     const [problemId, setProblemId] = useState<string | null>(null);
     const [problems, setProblems] = useState<any[]>([]);
 
@@ -148,7 +149,7 @@ export default function CreateIdeaPage() {
                         city: loc.city,
                         geohash: encodeGeohash(loc.lat, loc.lng)
                     },
-                    visibility: "public"
+                    visibility: visibility
                 });
 
                 // Create initial v1 snapshot
@@ -250,6 +251,37 @@ export default function CreateIdeaPage() {
                                             <SelectItem value="Refining" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">Refining</SelectItem>
                                             <SelectItem value="Building" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">Building</SelectItem>
                                             <SelectItem value="Launched" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">Launched</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
+                            {mode === "idea" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="visibility" className="text-zinc-400 font-medium ml-1 text-[10px] uppercase tracking-widest">Visibility</Label>
+                                    <Select value={visibility} onValueChange={(val) => setVisibility(val as any)} required>
+                                        <SelectTrigger className="w-full h-14 bg-white/[0.02] border-white/[0.05] text-white rounded-xl focus-visible:ring-indigo-500/50 px-4 text-base transition-all">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-[#0a0a0c] border-white/[0.05] text-white rounded-xl">
+                                            <SelectItem value="public" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">
+                                                <div className="flex flex-col items-start gap-0.5">
+                                                    <span className="font-bold">Public</span>
+                                                    <span className="text-[10px] opacity-50 font-medium tracking-tight">Visible to all users in the feed.</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="restricted" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">
+                                                <div className="flex flex-col items-start gap-0.5">
+                                                    <span className="font-bold">Restricted</span>
+                                                    <span className="text-[10px] opacity-50 font-medium tracking-tight">Requires approval + Soft NDA.</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="investor" className="focus:bg-white/[0.05] focus:text-white cursor-pointer rounded-lg my-1">
+                                                <div className="flex flex-col items-start gap-0.5">
+                                                    <span className="font-bold">Investor Only</span>
+                                                    <span className="text-[10px] opacity-50 font-medium tracking-tight">Only Catalysts + Soft NDA.</span>
+                                                </div>
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

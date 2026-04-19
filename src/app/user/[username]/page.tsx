@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { deleteUser } from "firebase/auth";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { User, MapPin, Heart, Lightbulb, ChevronRight, MessageSquare, ArrowLeft, Edit3, Trash2, X, Save } from "lucide-react";
+import { User, MapPin, Heart, Lightbulb, ChevronRight, MessageSquare, ArrowLeft, Edit3, Trash2, X, Save, ShieldCheck, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,6 +19,9 @@ interface UserProfile {
     country: string;
     totalLikes: number;
     photoURL?: string;
+    trustScore?: number;
+    reportsCount?: number;
+    contributionActivity?: number;
 }
 
 interface Idea {
@@ -241,15 +244,38 @@ export default function ProfilePage() {
                                 )}
 
                                 <div className="flex items-center justify-center gap-4 py-4 border-y border-white/5">
-                                    <div className="text-center">
-                                        <p className="text-white font-black text-lg">{ideas.length}</p>
-                                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Ideas</p>
-                                    </div>
                                     <div className="w-px h-8 bg-white/5" />
                                     <div className="text-center">
                                         <p className="text-white font-black text-lg">{profile.totalLikes || 0}</p>
                                         <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Impact</p>
                                     </div>
+                                    <div className="w-px h-8 bg-white/5" />
+                                    <div className="text-center">
+                                        <p className="text-indigo-400 font-black text-lg">{profile.trustScore || 100}</p>
+                                        <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Trust</p>
+                                    </div>
+                                </div>
+
+                                {/* Reputation Badges */}
+                                <div className="flex flex-wrap justify-center gap-2 px-4">
+                                    {(profile.trustScore || 100) >= 150 && (
+                                        <div className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-1.5 shadow-lg shadow-indigo-500/5">
+                                            <ShieldCheck className="w-3 h-3 text-indigo-400" />
+                                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Verified Creator</span>
+                                        </div>
+                                    )}
+                                    {ideas.length >= 5 && (
+                                        <div className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center gap-1.5 shadow-lg shadow-purple-500/5">
+                                            <Lightbulb className="w-3 h-3 text-purple-400" />
+                                            <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Serial Sparker</span>
+                                        </div>
+                                    )}
+                                    {(profile.reportsCount || 0) === 0 && (profile.trustScore || 100) >= 100 && (
+                                        <div className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1.5 shadow-lg shadow-green-500/5">
+                                            <ShieldAlert className="w-3 h-3 text-green-400" />
+                                            <span className="text-[8px] font-black text-green-400 uppercase tracking-widest">Clean Record</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-4 pt-2">
@@ -301,31 +327,47 @@ export default function ProfilePage() {
                                         transition={{ delay: idx * 0.05 }}
                                         key={idea.id}
                                     >
-                                        <Link
-                                            href={`/idea/${idea.id}`}
-                                            className="group block p-6 bg-[#121218] border border-white/[0.04] hover:border-white/10 rounded-[28px] transition-all hover:bg-white/[0.02] relative"
-                                        >
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                <div className="space-y-2 flex-1 pr-6">
-                                                    <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-bold uppercase tracking-widest rounded-md">
-                                                        {idea.category}
-                                                    </span>
-                                                    <h3 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
-                                                        {idea.title}
-                                                    </h3>
-                                                    <p className="text-sm text-zinc-500 line-clamp-1 italic font-medium">
-                                                        "{idea.problem}"
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-6 shrink-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <Heart className="w-4 h-4 text-red-500/40" />
-                                                        <span className="text-white/80 font-bold text-sm">{idea.likesCount}</span>
+                                        <div className="flex gap-4 items-stretch group">
+                                            <Link
+                                                href={`/idea/${idea.id}`}
+                                                className="flex-1 block p-6 bg-[#121218] border border-white/[0.04] hover:border-white/10 rounded-[28px] transition-all hover:bg-white/[0.02] relative"
+                                            >
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div className="space-y-2 flex-1 pr-6">
+                                                        <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-bold uppercase tracking-widest rounded-md">
+                                                            {idea.category}
+                                                        </span>
+                                                        <h3 className="text-xl font-bold text-white group-hover:text-indigo-300 transition-colors">
+                                                            {idea.title}
+                                                        </h3>
+                                                        <p className="text-sm text-zinc-500 line-clamp-1 italic font-medium">
+                                                            "{idea.problem}"
+                                                        </p>
                                                     </div>
-                                                    <ChevronRight className="w-5 h-5 text-zinc-800 group-hover:text-white transition-all group-hover:translate-x-1" />
+                                                    <div className="flex items-center gap-6 shrink-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <Heart className="w-4 h-4 text-red-500/40" />
+                                                            <span className="text-white/80 font-bold text-sm">{idea.likesCount}</span>
+                                                        </div>
+                                                        <ChevronRight className="w-5 h-5 text-zinc-800 group-hover:text-white transition-all group-hover:translate-x-1" />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Link>
+                                            </Link>
+                                            {!isOwnProfile && (
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleMessage();
+                                                    }}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="w-16 rounded-[28px] bg-[#121218] border border-white/[0.04] hover:border-white/10 text-zinc-600 hover:text-white transition-all self-stretch"
+                                                    title="Message Architect"
+                                                >
+                                                    <MessageSquare className="w-5 h-5" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </motion.div>
                                 ))
                             )}

@@ -148,6 +148,7 @@ export default function InzlyMap() {
                         engagementScore: d.engagementScore || 0,
                         likesCount: d.likesCount || 0,
                         views: d.views || 0,
+                        userId: d.userId,
                         authorUsername: d.authorUsername,
                         type: 'idea'
                     });
@@ -172,7 +173,8 @@ export default function InzlyMap() {
                         engagementScore: d.severity === 'high' ? 50 : 20,
                         likesCount: 0,
                         views: 0,
-                        authorUsername: d.creatorId,
+                        userId: d.creatorId,
+                        authorUsername: d.authorUsername || d.creatorId,
                         type: 'problem'
                     });
                 });

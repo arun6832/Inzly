@@ -7,6 +7,10 @@ export interface User {
     username?: string;
     mode: UserMode;
     photoURL?: string;
+    // Reputation fields
+    trustScore?: number;
+    reportsCount?: number;
+    contributionActivity?: number;
 }
 
 export interface IdeaLocation {
@@ -30,6 +34,6 @@ export interface Idea {
     createdAt?: { toDate?: () => Date } | Date | number | string;
     // Map feature fields
     location?: IdeaLocation;
-    visibility?: "public" | "private" | "investor";
+    visibility?: "public" | "restricted" | "investor";
     engagementScore?: number;
 }

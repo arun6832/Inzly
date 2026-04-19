@@ -6,17 +6,20 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bookmark, Heart, User } from "lucide-react";
+import { Bookmark, Heart, User, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Idea {
     id: string;
     title: string;
     problem: string;
     category: string;
+    userId: string;
 }
 
 export default function SavedIdeasPage() {
     const { user, loading } = useAuth();
+    const router = useRouter();
     const [savedIdeas, setSavedIdeas] = useState<Idea[]>([]);
     const [userData, setUserData] = useState<{name?: string, totalLikes?: number} | null>(null);
     const [fetching, setFetching] = useState(true);
@@ -57,6 +60,7 @@ export default function SavedIdeasPage() {
                             title: data.title,
                             problem: data.problem,
                             category: data.category,
+                            userId: data.userId,
                         });
                     }
                 }
@@ -71,6 +75,23 @@ export default function SavedIdeasPage() {
 
         fetchSaved();
     }, [user]);
+
+    const handleMessage = async (e: React.MouseEvent, idea: Idea) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        
+        try {
+            const { getOrCreateChat } = await import("@/lib/messaging");
+            const chatId = await getOrCreateChat(user.uid, idea.userId);
+            router.push(`/messages/${chatId}`);
+        } catch (err) {
+            console.error("Failed to start chat:", err);
+        }
+    };
 
     if (loading || fetching) {
         return <div className="flex-1 flex justify-center items-center bg-[#0B0B0F]">
@@ -141,12 +162,22 @@ export default function SavedIdeasPage() {
                                 <p className="text-zinc-400 line-clamp-3 mb-6 flex-1 text-sm leading-relaxed relative z-10">
                                     {idea.problem}
                                 </p>
-                                <div className="w-full mt-auto pt-4 border-t border-white/[0.04] relative z-10">
-                                    <Link href={`/idea/${idea.id}`} className="w-full block">
+                                <div className="w-full mt-auto pt-4 border-t border-white/[0.04] relative z-10 flex items-center gap-2">
+                                    <Link href={`/idea/${idea.id}`} className="flex-1">
                                         <Button variant="ghost" className="w-full h-12 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] justify-center text-white font-semibold transition-all group">
                                             Read More
                                         </Button>
                                     </Link>
+                                    {user?.uid !== idea.userId && (
+                                        <Button 
+                                            onClick={(e) => handleMessage(e, idea)}
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="w-12 h-12 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 hover:text-white"
+                                        >
+                                            <MessageSquare className="w-5 h-5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}
