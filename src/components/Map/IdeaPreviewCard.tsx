@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MapIdea } from "@/lib/geoUtils";
 import { useAuth } from "@/lib/AuthContext";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const CATEGORY_COLORS: Record<string, string> = {
     "AI/ML": "#6366f1",
@@ -24,6 +27,21 @@ interface Props {
 export default function IdeaPreviewCard({ idea, onClose }: Props) {
     const router = useRouter();
     const { user } = useAuth();
+    const [authorScore, setAuthorScore] = useState<number | null>(null);
+    
+    useEffect(() => {
+        if (idea?.userId) {
+            const fetchScore = async () => {
+                const uSnap = await getDoc(doc(db, "users", idea.userId));
+                if (uSnap.exists()) {
+                    setAuthorScore(uSnap.data().trustScore || 100);
+                }
+            };
+            fetchScore();
+        } else {
+            setAuthorScore(null);
+        }
+    }, [idea?.userId]);
     
     const isProblem = idea?.type === 'problem';
     const color = idea ? (isProblem ? "#a855f7" : (CATEGORY_COLORS[idea.category] || "#6366f1")) : "#6366f1";
@@ -87,6 +105,12 @@ export default function IdeaPreviewCard({ idea, onClose }: Props) {
                                             <span className="flex items-center gap-1 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
                                                 <MapPin className="w-3 h-3 text-zinc-700" />
                                                 {idea.city}
+                                            </span>
+                                        )}
+                                        {authorScore !== null && (
+                                            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-zinc-500">
+                                                <div className={`w-1 h-1 rounded-full ${authorScore >= 90 ? 'bg-green-500' : 'bg-indigo-500'}`} />
+                                                {authorScore}
                                             </span>
                                         )}
                                     </div>

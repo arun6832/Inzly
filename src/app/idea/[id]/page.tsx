@@ -5,7 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, increment, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Share2, BookmarkPlus } from "lucide-react";
+import { 
+    ChevronLeft, Share2, BookmarkPlus, 
+    Lock, Eye, ShieldCheck, Flag, MessageSquare, Sparkles 
+} from "lucide-react";
 import { Github } from "@/components/icons";
 import { useAuth } from "@/lib/AuthContext";
 import { ExecutionStatus, IdeaVersion, Problem } from "@/lib/geoUtils";
@@ -13,7 +16,7 @@ import DiscussionSection from "@/components/DiscussionSection";
 import TeamManagement from "@/components/TeamManagement";
 import SoftNDAModal from "@/components/SoftNDAModal";
 import ReportModal from "@/components/ReportModal";
-import { Lock, Eye, ShieldCheck, Flag, MessageSquare } from "lucide-react";
+import RefineIdeaModal from "@/components/RefineIdeaModal";
 
 interface Idea {
     id: string;
@@ -53,6 +56,7 @@ export default function IdeaDetailPage() {
     const [accessRequestStatus, setAccessRequestStatus] = useState<'none' | 'pending' | 'rejected'>('none');
     const [showNDA, setShowNDA] = useState(false);
     const [showReport, setShowReport] = useState(false);
+    const [showRefine, setShowRefine] = useState(false);
     const [requestingAccess, setRequestingAccess] = useState(false);
 
     const ideaId = params.id as string;
@@ -161,7 +165,7 @@ export default function IdeaDetailPage() {
         if (!ideaData) return;
         
         const isOwner = user?.uid === ideaData.userId;
-        const isInvestor = user && (user as any).mode === 'catalyst'; // Cast as any because AuthContext User might not have mode directly if not synced
+        const isInvestor = userMode === 'catalyst'; 
 
         if (ideaData.visibility === 'public' || isOwner) {
             setAccessGranted(true);
@@ -543,8 +547,9 @@ export default function IdeaDetailPage() {
                                         <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-40">Architect Controls</h3>
                                         <Button 
                                             className="w-full h-14 bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] transition-transform"
-                                            onClick={() => alert("Refinement Portal is expanding. vNext creation coming in next update.")}
+                                            onClick={() => setShowRefine(true)}
                                         >
+                                            <Sparkles className="w-4 h-4 mr-2" />
                                             Propose v{ (ideaData.currentVersion || 1) + 1 } (Refine)
                                         </Button>
                                         <Button 
@@ -681,6 +686,21 @@ export default function IdeaDetailPage() {
                     onClose={() => setShowReport(false)} 
                     onSubmit={handleReport} 
                     ideaTitle={ideaData.title} 
+                />
+                
+                <RefineIdeaModal 
+                    isOpen={showRefine}
+                    onClose={() => setShowRefine(false)}
+                    ideaId={ideaId}
+                    currentTitle={ideaData.title}
+                    currentIdea={ideaData.idea}
+                    currentStatus={ideaData.executionStatus || 'Thinking'}
+                    currentGithub={ideaData.githubUrl || ''}
+                    currentVersion={ideaData.currentVersion || 1}
+                    onSuccess={() => {
+                        // Refresh page data
+                        window.location.reload();
+                    }}
                 />
             </div>
         </div>

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import PreviewSwipeCard from "@/components/PreviewSwipeCard";
 import { PRECISE_AI_NEWS } from "@/lib/constants";
-
 interface Idea {
   id: string;
   title: string;
@@ -20,6 +19,8 @@ interface Idea {
   likesCount?: number;
   githubUrl?: string;
   authorUsername?: string;
+  authorTrustScore?: number;
+  visibility?: string;
 }
 
 export default function Home() {
@@ -42,14 +43,10 @@ export default function Home() {
         const { where } = await import("firebase/firestore");
         const interactedIdeaIds = new Set<string>();
         
-        let userMode = "explorer";
+        let finalUserMode = userMode || "explorer";
+        
         if (user?.uid) {
             try {
-                const { doc, getDoc } = await import("firebase/firestore");
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().mode) {
-                    userMode = userDoc.data().mode;
-                }
                 const savedQ = query(collection(db, "savedIdeas"), where("userId", "==", user.uid));
                 const likedQ = query(collection(db, "likes"), where("userId", "==", user.uid));
                 const [savedSnap, likedSnap] = await Promise.all([getDocs(savedQ), getDocs(likedQ)]);
@@ -58,7 +55,16 @@ export default function Home() {
             } catch (e) { console.error(e); }
         }
 
-        const q = query(collection(db, "ideas"), orderBy("createdAt", "desc"), limit(100));
+        // 1. Visibility determination
+        const filters = ["public"];
+        if (finalUserMode === 'catalyst') filters.push("investor");
+        
+        const q = query(
+          collection(db, "ideas"), 
+          where("visibility", "in", filters),
+          orderBy("createdAt", "desc"), 
+          limit(100)
+        );
         const snapshot = await getDocs(q);
         const rawIdeas: any[] = [];
         snapshot.forEach((doc) => {
@@ -72,9 +78,11 @@ export default function Home() {
             const { doc, getDoc } = await import("firebase/firestore");
             const authorRef = doc(db, "users", idea.userId);
             const authorSnap = await getDoc(authorRef);
+            const authorData = authorSnap.exists() ? authorSnap.data() : null;
             return {
                 ...idea,
-                authorUsername: authorSnap.exists() ? authorSnap.data().username : "unknown"
+                authorUsername: authorData?.username || "unknown",
+                authorTrustScore: authorData?.trustScore || 100
             };
         }));
         
@@ -85,7 +93,7 @@ export default function Home() {
       }
     };
     fetchIdeas();
-  }, [user?.uid]);
+  }, [user?.uid, userMode]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -104,7 +112,10 @@ export default function Home() {
             sessionStorage.setItem(sessionKey, "true");
           }
         }
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        // Silence permission errors for site stats
+        console.warn("Analytics: Local scan only.");
+      }
     };
     fetchStats();
   }, []);
@@ -614,7 +625,7 @@ export default function Home() {
                   {[...ideas].reverse().map((idea, index) => {
                     const realIndex = ideas.length - 1 - index;
                     return (
-                      <SwipeCard
+                    <SwipeCard
                         key={idea.id}
                         idea={idea}
                         active={realIndex === 0}

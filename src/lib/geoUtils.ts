@@ -63,6 +63,7 @@ export interface Problem {
     category: string;
     userId: string;
     authorUsername?: string;
+    authorTrustScore?: number;
     lat: number;
     lng: number;
     city: string;
@@ -92,6 +93,7 @@ export interface MapIdea {
     views: number;
     userId: string;
     authorUsername?: string;
+    authorTrustScore?: number;
     problemId?: string | null;
     executionStatus?: ExecutionStatus;
     currentVersion?: number;

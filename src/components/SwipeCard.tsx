@@ -18,6 +18,7 @@ interface Idea {
     views?: number;
     githubUrl?: string;
     authorUsername?: string;
+    authorTrustScore?: number;
     visibility?: "public" | "restricted" | "investor";
 }
 
@@ -163,8 +164,23 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                                 className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 text-[10px] font-bold text-zinc-500 hover:text-white border border-white/5 transition-all uppercase tracking-widest"
                             >
                                 <User className="w-2.5 h-2.5" />
-                                {idea.authorUsername}
-                            </button>
+                            {idea.authorUsername}
+                            {idea.authorTrustScore && idea.authorTrustScore >= 95 && (
+                                <ShieldAlert className="w-2.5 h-2.5 text-indigo-400 fill-indigo-400/20" />
+                            )}
+                        </button>
+                        )}
+                        
+                        {/* Integrity Pulse */}
+                        {idea.authorTrustScore !== undefined && (
+                            <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                                <div className={`w-1 h-1 rounded-full transition-shadow duration-1000 ${
+                                    idea.authorTrustScore >= 90 ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' :
+                                    idea.authorTrustScore >= 70 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' :
+                                    'bg-orange-500'
+                                }`} />
+                                <span className="text-[9px] font-black text-zinc-400">{idea.authorTrustScore}</span>
+                            </div>
                         )}
                         
                         {/* Visibility Badge */}

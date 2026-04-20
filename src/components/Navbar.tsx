@@ -7,7 +7,7 @@ import { Button } from "./ui/button";
 import GlobalSearch from "./GlobalSearch";
 import { 
     Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, 
-    Search, UserCircle2, MapPin, ChevronDown, User, Settings
+    Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -47,6 +47,7 @@ export default function Navbar() {
     const isScrolled = mounted && scrolled;
 
     const navLinks = [
+        { href: "/dashboard", label: "Studio", icon: LayoutDashboard },
         { href: "/map", label: "Map", icon: MapPin },
         { href: "/leaderboard", label: "Rank", icon: Trophy },
         { href: "/messages", label: "Chats", icon: MessageSquare },

@@ -22,6 +22,7 @@ interface UserProfile {
     trustScore?: number;
     reportsCount?: number;
     contributionActivity?: number;
+    mode?: "builder" | "catalyst";
 }
 
 interface Idea {
@@ -48,6 +49,7 @@ export default function ProfilePage() {
     const [deleting, setDeleting] = useState(false);
     const [editName, setEditName] = useState("");
     const [editBio, setEditBio] = useState("");
+    const [editMode, setEditMode] = useState<"builder" | "catalyst">("builder");
     const [saveError, setSaveError] = useState("");
 
     const isOwnProfile = currentUser?.uid === profile?.id;
@@ -115,6 +117,7 @@ export default function ProfilePage() {
     const openEdit = () => {
         setEditName(profile?.name || "");
         setEditBio(profile?.bio || "");
+        setEditMode(profile?.mode || "builder");
         setSaveError("");
         setEditOpen(true);
     };
@@ -131,8 +134,9 @@ export default function ProfilePage() {
             await updateDoc(doc(db, "users", profile.id), {
                 name: editName.trim(),
                 bio: editBio.trim(),
+                mode: editMode,
             });
-            setProfile({ ...profile, name: editName.trim(), bio: editBio.trim() });
+            setProfile({ ...profile, name: editName.trim(), bio: editBio.trim(), mode: editMode });
             setEditOpen(false);
         } catch (err) {
             console.error("Save failed", err);
@@ -234,7 +238,16 @@ export default function ProfilePage() {
 
                                 <div>
                                     <h1 className="text-2xl font-black text-white px-2 leading-tight">{profile.name}</h1>
-                                    <p className="text-indigo-400 font-bold text-sm tracking-tight mt-1">@{profile.username}</p>
+                                    <div className="flex items-center justify-center gap-2 mt-1">
+                                        <p className="text-zinc-500 font-bold text-sm tracking-tight">@{profile.username}</p>
+                                        <div className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${
+                                            (profile.mode || 'builder') === 'builder' 
+                                            ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5' 
+                                            : 'text-amber-400 border-amber-500/20 bg-amber-500/5'
+                                        }`}>
+                                            {profile.mode || 'builder'}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {profile.bio && (
@@ -426,6 +439,38 @@ export default function ProfilePage() {
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
                                     />
                                     <p className="text-[11px] text-zinc-600 text-right">{editBio.length}/160</p>
+                                </div>
+
+                                {/* Mode Select */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Platform Mode</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setEditMode("builder")}
+                                            className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                editMode === 'builder' 
+                                                ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]' 
+                                                : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
+                                            }`}
+                                        >
+                                            Founder
+                                        </button>
+                                        <button
+                                            onClick={() => setEditMode("catalyst")}
+                                            className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                editMode === 'catalyst' 
+                                                ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
+                                                : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
+                                            }`}
+                                        >
+                                            Catalyst
+                                        </button>
+                                    </div>
+                                    <p className="text-[9px] text-zinc-600 font-medium px-1">
+                                        {editMode === 'builder' 
+                                            ? 'Optimized for project architecture and team orchestration.' 
+                                            : 'Verified investor mode. Grants access to restricted high-signal concepts.'}
+                                    </p>
                                 </div>
 
                                 {saveError && (

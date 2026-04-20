@@ -132,7 +132,22 @@ export default function InzlyMap() {
 
             // 1. Fetch Ideas if toggled
             if (toggleI) {
-                const ideaQ = query(collection(db, "ideas"), where("visibility", "==", "public"));
+                // Determine visibility filters
+                let filters = ["public"];
+                if (navigator.onLine) { // Small hack to allow check
+                    const { getAuth } = await import("firebase/auth");
+                    const auth = getAuth();
+                    const u = auth.currentUser;
+                    if (u) {
+                        const { getDoc, doc } = await import("firebase/firestore");
+                        const uSnap = await getDoc(doc(db, "users", u.uid));
+                        if (uSnap.exists() && uSnap.data().mode === 'catalyst') {
+                            filters.push("investor");
+                        }
+                    }
+                }
+
+                const ideaQ = query(collection(db, "ideas"), where("visibility", "in", filters));
                 const ideaSnap = await getDocs(ideaQ);
                 ideaSnap.forEach(docSnap => {
                     const d = docSnap.data();

@@ -16,6 +16,7 @@ interface LeaderboardUser {
     name: string;
     username: string;
     totalLikes: number;
+    trustScore: number;
     country: string;
 }
 
@@ -37,12 +38,13 @@ export default function LeaderboardPage() {
     const [loadingOverall, setLoadingOverall] = useState(true);
     const [loadingCountry, setLoadingCountry] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState<"totalLikes" | "trustScore">("totalLikes");
 
     // Fetch Overall Leaderboard
     useEffect(() => {
         const fetchOverall = async () => {
             try {
-                const q = query(collection(db, "users"), orderBy("totalLikes", "desc"), limit(100));
+                const q = query(collection(db, "users"), orderBy(sortBy, "desc"), limit(100));
                 const snap = await getDocs(q);
                 const users: LeaderboardUser[] = [];
                 snap.forEach(doc => {
@@ -52,6 +54,7 @@ export default function LeaderboardPage() {
                         name: data.name, 
                         username: data.username || "unknown", 
                         totalLikes: data.totalLikes || 0, 
+                        trustScore: data.trustScore || 100,
                         country: data.country || "Unknown" 
                     });
                 });
@@ -63,7 +66,7 @@ export default function LeaderboardPage() {
             }
         };
         fetchOverall();
-    }, []);
+    }, [sortBy]);
 
     // Fetch Country Leaderboard
     useEffect(() => {
@@ -73,7 +76,7 @@ export default function LeaderboardPage() {
                 const q = query(
                     collection(db, "users"),
                     where("country", "==", selectedCountry),
-                    orderBy("totalLikes", "desc"),
+                    orderBy(sortBy, "desc"),
                     limit(50)
                 );
                 const snap = await getDocs(q);
@@ -85,6 +88,7 @@ export default function LeaderboardPage() {
                         name: data.name, 
                         username: data.username || "unknown", 
                         totalLikes: data.totalLikes || 0, 
+                        trustScore: data.trustScore || 100,
                         country: data.country 
                     });
                 });
@@ -96,7 +100,7 @@ export default function LeaderboardPage() {
             }
         };
         fetchCountry();
-    }, [selectedCountry]);
+    }, [selectedCountry, sortBy]);
 
     const renderUserItem = (u: LeaderboardUser, index: number) => {
         const isTop3 = index < 3;
@@ -130,11 +134,19 @@ export default function LeaderboardPage() {
                         </p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                        {u.totalLikes}
+                <div className="flex items-center gap-8">
+                    <div className="text-right">
+                        <div className={`text-xl font-black ${sortBy === 'totalLikes' ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400' : 'text-zinc-400'}`}>
+                            {u.totalLikes}
+                        </div>
+                        <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-black">Likes</div>
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Likes</div>
+                    <div className="text-right border-l border-white/5 pl-8">
+                        <div className={`text-xl font-black ${sortBy === 'trustScore' ? 'text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-indigo-400' : 'text-zinc-400'}`}>
+                            {u.trustScore}
+                        </div>
+                        <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-black">Trust</div>
+                    </div>
                 </div>
             </motion.div>
         );
@@ -173,18 +185,35 @@ export default function LeaderboardPage() {
                 </div>
 
                 <Tabs defaultValue="overall" className="w-full">
-                    <TabsList className="w-full max-w-sm mx-auto grid grid-cols-2 bg-[#121218] border border-white/[0.04] mb-10 rounded-full p-1.5 h-14 shadow-xl">
-                        <TabsTrigger value="overall" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
-                            <Globe className="w-4 h-4 mr-2" />
-                            Global
-                        </TabsTrigger>
-                        <TabsTrigger value="country" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-white/10 data-[state=active]:text-white">
-                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                            </svg>
-                            By Country
-                        </TabsTrigger>
-                    </TabsList>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-10">
+                        <TabsList className="w-full max-w-sm grid grid-cols-2 bg-[#121218] border border-white/[0.04] rounded-full p-1.5 h-14 shadow-xl">
+                            <TabsTrigger value="overall" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
+                                <Globe className="w-4 h-4 mr-2" />
+                                Global
+                            </TabsTrigger>
+                            <TabsTrigger value="country" className="rounded-full text-zinc-400 font-semibold data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                </svg>
+                                By Country
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <div className="flex items-center gap-2 p-1.5 bg-[#121218] border border-white/[0.04] rounded-full h-14 shadow-xl">
+                            <button 
+                                onClick={() => setSortBy("totalLikes")}
+                                className={`px-5 h-full rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'totalLikes' ? 'bg-indigo-500 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                Impact
+                            </button>
+                            <button 
+                                onClick={() => setSortBy("trustScore")}
+                                className={`px-5 h-full rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'trustScore' ? 'bg-indigo-500 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                Integrity
+                            </button>
+                        </div>
+                    </div>
 
                     <TabsContent value="overall" className="space-y-4 animate-in fade-in-50 duration-500">
                         {loadingOverall ? (
