@@ -37,7 +37,7 @@ interface Idea {
 export default function IdeaDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, userMode } = useAuth();
 
     const [ideaData, setIdeaData] = useState<Idea | null>(null);
     const [linkedProblem, setLinkedProblem] = useState<Problem | null>(null);

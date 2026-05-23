@@ -12,7 +12,8 @@ import {
     doc,
     getDoc,
     limit,
-    Timestamp 
+    Timestamp,
+    updateDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
@@ -43,6 +44,10 @@ export default function ChatPage() {
     const [newMessage, setNewMessage] = useState("");
     const [otherUser, setOtherUser] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
+
+    const isTypingLocal = useRef(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // 1. Fetch Chat Info & Other User
     useEffect(() => {
@@ -97,12 +102,56 @@ export default function ChatPage() {
         return () => unsubscribe();
     }, [params.chatId]);
 
+    // 3. Listen for Typing Status
+    useEffect(() => {
+        if (!params.chatId || !otherUser) return;
+        
+        const chatRef = doc(db, "chats", params.chatId);
+        const unsubscribe = onSnapshot(chatRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.typing && data.typing[otherUser.id as string]) {
+                    setIsOtherTyping(true);
+                    setTimeout(() => {
+                        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+                    }, 50);
+                } else {
+                    setIsOtherTyping(false);
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, [params.chatId, otherUser]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+
+        if (!user || !params.chatId) return;
+
+        const chatRef = doc(db, "chats", params.chatId);
+
+        if (!isTypingLocal.current) {
+            isTypingLocal.current = true;
+            updateDoc(chatRef, { [`typing.${user.uid}`]: true }).catch(console.error);
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            isTypingLocal.current = false;
+            updateDoc(chatRef, { [`typing.${user.uid}`]: false }).catch(console.error);
+        }, 2000);
+    };
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !user || !params.chatId) return;
 
         const text = newMessage;
         setNewMessage("");
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        isTypingLocal.current = false;
 
         try {
             const messagesRef = collection(db, "chats", params.chatId, "messages");
@@ -113,11 +162,11 @@ export default function ChatPage() {
             });
 
             // Update chat meta
-            const { updateDoc } = await import("firebase/firestore");
             const chatRef = doc(db, "chats", params.chatId);
             await updateDoc(chatRef, {
                 lastMessage: text,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                [`typing.${user.uid}`]: false
             });
         } catch (err) {
             console.error("Message send failed", err);
@@ -180,6 +229,24 @@ export default function ChatPage() {
                         </motion.div>
                     ))}
                 </AnimatePresence>
+                
+                <AnimatePresence>
+                    {isOtherTyping && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="flex justify-start"
+                        >
+                            <div className="bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-[20px] rounded-tl-none px-4 py-3 flex items-center gap-1.5 h-[44px]">
+                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }} />
+                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }} />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <div ref={scrollRef} />
             </div>
 
@@ -187,22 +254,29 @@ export default function ChatPage() {
             <div className="p-4 bg-[#050507] border-t border-white/[0.04]">
                 <form 
                     onSubmit={handleSendMessage}
-                    className="max-w-4xl mx-auto flex gap-3"
+                    className="max-w-4xl mx-auto relative flex items-center"
                 >
                     <input 
                         type="text" 
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={handleInputChange}
                         placeholder="Discuss project or investment..."
-                        className="flex-1 bg-[#121218] border border-white/[0.08] rounded-2xl px-6 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner"
+                        className="w-full bg-[#121218] border border-white/[0.08] rounded-2xl pl-6 pr-16 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
                     />
-                    <Button 
-                        type="submit"
-                        disabled={!newMessage.trim()}
-                        className="bg-white text-black hover:bg-zinc-200 rounded-2xl px-6 h-14 font-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
-                    >
-                        <Send className="w-5 h-5" />
-                    </Button>
+                    <AnimatePresence>
+                        {newMessage.trim() && (
+                            <motion.button 
+                                initial={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                exit={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                type="submit"
+                                className="absolute right-2 bg-indigo-500 text-white hover:bg-indigo-400 rounded-xl w-10 h-10 flex items-center justify-center transition-colors shadow-xl shadow-indigo-500/20"
+                            >
+                                <Send className="w-4 h-4 ml-0.5" />
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
                 </form>
                 <p className="text-center text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em] mt-3 py-1">
                     Encrypted Industrial Communication Pipeline

@@ -98,7 +98,7 @@ export default function RefineIdeaModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-[#0B0B0F] border border-white/10 text-white max-w-2xl rounded-[32px] p-0 overflow-hidden shadow-2xl">
+            <DialogContent className="bg-[#0B0B0F] border border-white/10 text-white max-w-4xl rounded-[32px] p-0 overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-pulse" />
                 
                 <DialogHeader className="p-8 pb-0">
@@ -112,29 +112,31 @@ export default function RefineIdeaModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Refined Title</label>
-                        <Input 
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="bg-white/5 border-white/10 rounded-xl h-12 focus:ring-indigo-500"
-                        />
-                    </div>
+                <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Refined Title</label>
+                            <Input 
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="bg-white/5 border-white/10 rounded-xl h-12 focus:ring-indigo-500"
+                            />
+                        </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Execution Status</label>
-                        <Select value={status} onValueChange={(val: ExecutionStatus) => setStatus(val)}>
-                            <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12">
-                                <SelectValue placeholder="Select Status" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#0B0B0F] border-white/10 text-white">
-                                <SelectItem value="Thinking">Thinking</SelectItem>
-                                <SelectItem value="Refining">Refining</SelectItem>
-                                <SelectItem value="Building">Building</SelectItem>
-                                <SelectItem value="Launched">Launched</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Execution Status</label>
+                            <Select value={status} onValueChange={(val: ExecutionStatus) => setStatus(val)}>
+                                <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12">
+                                    <SelectValue placeholder="Select Status" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0B0B0F] border-white/10 text-white">
+                                    <SelectItem value="Thinking">Thinking</SelectItem>
+                                    <SelectItem value="Refining">Refining</SelectItem>
+                                    <SelectItem value="Building">Building</SelectItem>
+                                    <SelectItem value="Launched">Launched</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -142,29 +144,29 @@ export default function RefineIdeaModal({
                         <Textarea 
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            rows={6}
-                            className="bg-white/5 border-white/10 rounded-2xl p-4 focus:ring-indigo-500 text-sm leading-relaxed"
+                            rows={12}
+                            className="bg-white/5 border-white/10 rounded-2xl p-4 focus:ring-indigo-500 text-sm leading-relaxed resize-none"
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">GitHub Artifact (Optional)</label>
-                        <Input 
-                            value={github}
-                            onChange={(e) => setGithub(e.target.value)}
-                            placeholder="https://github.com/..."
-                            className="bg-white/5 border-white/10 rounded-xl h-12 focus:ring-indigo-500"
-                        />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">GitHub Artifact (Optional)</label>
+                            <Input 
+                                value={github}
+                                onChange={(e) => setGithub(e.target.value)}
+                                placeholder="https://github.com/..."
+                                className="bg-white/5 border-white/10 rounded-xl h-12 focus:ring-indigo-500"
+                            />
+                        </div>
 
-                    <div className="pt-4 border-t border-white/5">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Changelog (Required for Snapshot)</label>
                             <Input 
                                 value={changelog}
                                 onChange={(e) => setChangelog(e.target.value)}
                                 placeholder="What changed in this version?"
-                                className="bg-indigo-500/5 border-indigo-500/20 rounded-xl h-12 focus:ring-indigo-500"
+                                className="bg-indigo-500/5 border-indigo-500/20 rounded-xl h-12 focus:ring-indigo-500 text-white placeholder:text-indigo-400/50"
                             />
                         </div>
                     </div>
