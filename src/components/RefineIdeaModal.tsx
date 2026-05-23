@@ -98,7 +98,7 @@ export default function RefineIdeaModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-[#0B0B0F] border border-white/10 text-white max-w-4xl rounded-[32px] p-0 overflow-hidden shadow-2xl">
+            <DialogContent className="bg-[#0B0B0F] border border-white/10 text-white max-w-4xl rounded-2xl p-0 overflow-hidden shadow-2xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-pulse" />
                 
                 <DialogHeader className="p-8 pb-0">
@@ -125,7 +125,7 @@ export default function RefineIdeaModal({
 
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Execution Status</label>
-                            <Select value={status} onValueChange={(val: ExecutionStatus) => setStatus(val)}>
+                            <Select value={status} onValueChange={(val: any) => { if (val) setStatus(val); }}>
                                 <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12">
                                     <SelectValue placeholder="Select Status" />
                                 </SelectTrigger>

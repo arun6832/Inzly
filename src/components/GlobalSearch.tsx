@@ -147,7 +147,7 @@ export default function GlobalSearch() {
                 onClick={() => setIsOpen(true)}
                 className="group relative cursor-text flex items-center"
             >
-                <div className="w-10 h-10 lg:w-full lg:h-10 bg-white/[0.03] lg:bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] rounded-full flex items-center justify-center lg:pl-10 lg:pr-12 transition-all">
+                <div className="w-10 h-10 lg:w-full lg:h-10 bg-white/[0.03] lg:bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] rounded-xl flex items-center justify-center lg:pl-10 lg:pr-12 transition-all">
                     <Search className="h-4 w-4 text-zinc-500 group-hover:text-zinc-300 lg:absolute lg:left-3 lg:top-2.5 transition-colors" />
                     <span className="hidden lg:block text-sm text-zinc-500">
                         {queryText || "Search..."}

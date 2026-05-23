@@ -76,7 +76,7 @@ export default function IdeaPreviewCard({ idea, onClose }: Props) {
                     className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[1000]"
                 >
                     <div
-                        className="relative rounded-3xl overflow-hidden shadow-2xl"
+                        className="relative rounded-2xl overflow-hidden shadow-2xl"
                         style={{
                             background: "rgba(13, 13, 24, 0.95)",
                             backdropFilter: "blur(24px)",

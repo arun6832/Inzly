@@ -88,7 +88,6 @@ export default function DashboardPage() {
                 
                 if (myIdeaIds.length > 0) {
                     const joinQ = query(collection(db, "collaborationRequests"), where("creatorId", "==", user.uid));
-                    // We split access requests because Firestore 'in' has limits or we can query by creatorId if we had it there
                     const accessQ = query(collection(db, "access_requests"), where("ideaId", "in", myIdeaIds.slice(0, 10))); 
                     
                     const [joinSnap, accessSnap] = await Promise.all([getDocs(joinQ), getDocs(accessQ)]);
@@ -200,94 +199,98 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <div className="flex-1 flex justify-center items-center bg-[#0B0B0F] min-h-screen">
-                <div className="w-8 h-8 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+            <div className="flex-1 flex justify-center items-center bg-black min-h-screen nothing-grid">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.4em] animate-pulse">Synchronizing Console Logs...</span>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 min-h-screen bg-[#0B0B0F] pt-28 pb-20 px-4 sm:px-6">
-            <div className="max-w-6xl mx-auto space-y-12">
+        <div className="flex-1 min-h-screen bg-black pt-24 pb-20 px-4 sm:px-6 nothing-grid">
+            <div className="max-w-6xl mx-auto space-y-12 relative z-10">
                 
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-2">
-                        <div className="flex items-center gap-3 text-indigo-400">
-                            <Shield className="w-5 h-5" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Architect Terminal v1.2</span>
+                        <div className="flex items-center gap-2 text-zinc-400 font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
+                            <span className="text-[9px] font-bold uppercase tracking-[0.3em]">Architect Terminal v1.2 // LIVE</span>
                         </div>
-                        <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight">Studio.</h1>
-                        <p className="text-zinc-500 font-medium italic">Manage your innovations, teams, and high-stakes access.</p>
+                        <h1 className="text-4xl sm:text-5xl font-bold font-dot tracking-tight text-white">Studio.</h1>
+                        <p className="text-zinc-500 font-mono text-xs uppercase tracking-wider">Manage your innovations, teams, and high-stakes access.</p>
                     </div>
                 </div>
 
-                <Tabs defaultValue="inbound" className="w-full space-y-10">
-                    <TabsList className="w-full max-w-2xl bg-[#121218] border border-white/[0.04] p-1 h-14 rounded-2xl overflow-hidden shadow-2xl">
-                        <TabsTrigger value="inbound" className="flex-1 h-full rounded-xl text-zinc-500 data-[state=active]:bg-indigo-500 data-[state=active]:text-white font-bold uppercase tracking-widest text-[10px] transition-all">
-                            <Clock className="w-3.5 h-3.5 mr-2" /> Inbound Hub
+                <Tabs defaultValue="inbound" className="w-full space-y-8">
+                    {/* Stark mechanical tabs container */}
+                    <TabsList className="w-full max-w-2xl bg-card border border-border p-1.5 h-14 rounded-2xl overflow-hidden shadow-2xl flex gap-1">
+                        <TabsTrigger value="inbound" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
+                            <Clock className="w-3 h-3 mr-2" /> Inbound
                         </TabsTrigger>
-                        <TabsTrigger value="portfolio" className="flex-1 h-full rounded-xl text-zinc-500 data-[state=active]:bg-indigo-500 data-[state=active]:text-white font-bold uppercase tracking-widest text-[10px] transition-all">
-                            <Lightbulb className="w-3.5 h-3.5 mr-2" /> My Innovations
+                        <TabsTrigger value="portfolio" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
+                            <Lightbulb className="w-3 h-3 mr-2" /> Innovations
                         </TabsTrigger>
-                        <TabsTrigger value="collabs" className="flex-1 h-full rounded-xl text-zinc-500 data-[state=active]:bg-indigo-500 data-[state=active]:text-white font-bold uppercase tracking-widest text-[10px] transition-all">
-                            <Users className="w-3.5 h-3.5 mr-2" /> Collaborations
+                        <TabsTrigger value="collabs" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
+                            <Users className="w-3 h-3 mr-2" /> Team
                         </TabsTrigger>
-                        <TabsTrigger value="audit" className="flex-1 h-full rounded-xl text-zinc-500 data-[state=active]:bg-indigo-500 data-[state=active]:text-white font-bold uppercase tracking-widest text-[10px] transition-all">
-                            <History className="w-3.5 h-3.5 mr-2" /> Security Log
+                        <TabsTrigger value="audit" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
+                            <History className="w-3 h-3 mr-2" /> Logs
                         </TabsTrigger>
                     </TabsList>
 
                     {/* ─── Inbound Hub ─── */}
                     <TabsContent value="inbound" className="animate-in fade-in-50 duration-500 space-y-6">
                         <section className="space-y-4">
-                            <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em] mb-6">Pending Transmissions</h2>
+                            <h2 className="text-[9px] font-bold font-mono text-zinc-500 uppercase tracking-[0.5em] mb-6">Pending Transmissions</h2>
                             
                             {requests.filter(r => r.status === 'pending').length === 0 ? (
-                                <div className="py-20 text-center bg-[#121218] rounded-[40px] border border-white/[0.02] space-y-4">
-                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                                        <TrendingUp className="w-8 h-8 text-zinc-800" />
+                                <div className="py-20 text-center bg-black rounded-none border border-white/10 space-y-4 relative">
+                                    <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto border border-white/10 z-10 relative">
+                                        <TrendingUp className="w-5 h-5 text-zinc-600" />
                                     </div>
-                                    <p className="text-zinc-600 font-medium tracking-widest uppercase text-[10px]">Your network is currently quiet.</p>
+                                    <p className="text-zinc-500 font-mono tracking-widest uppercase text-[9px] z-10 relative">Your network is currently quiet.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {requests.filter(r => r.status === 'pending').map(req => (
                                         <motion.div 
-                                            initial={{ opacity: 0, y: 10 }}
+                                            initial={{ opacity: 0, y: 5 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            key={req.id} 
-                                            className="p-8 rounded-[32px] bg-[#121218] border border-white/[0.04] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden group"
+                                        key={req.id} 
+                                            className="p-6 sm:p-8 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden group hover:border-blue-500/40 transition-colors"
                                         >
-                                            <div className="flex items-start gap-6 relative z-10">
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl ${req.type === 'join' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-orange-500/10 text-orange-400'}`}>
-                                                    {req.type === 'join' ? <Users className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                                            <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
+                                            <div className="flex items-start gap-6 relative z-10 font-mono">
+                                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0">
+                                                    {req.type === 'join' ? <Users className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${req.type === 'join' ? 'text-indigo-400 bg-indigo-500/10' : 'text-orange-400 bg-orange-500/10'}`}>
+                                                    <div className="flex flex-wrap items-center gap-3">
+                                                        <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 border border-white/10 bg-black text-white">
                                                             {req.type === 'join' ? 'Team Join' : 'Access Request'}
                                                         </span>
-                                                        <span className="text-[9px] font-bold text-zinc-600 uppercase">Target: {req.ideaTitle}</span>
+                                                        <span className="text-[8px] font-bold text-zinc-600 uppercase">Target: {req.ideaTitle}</span>
                                                     </div>
-                                                    <h3 className="text-xl font-bold text-white">{req.requesterName} <span className="text-zinc-500 font-medium text-sm ml-1">@{req.requesterUsername}</span></h3>
-                                                    {req.message && <p className="text-sm text-zinc-500 italic mt-2">&ldquo;{req.message}&rdquo;</p>}
+                                                    <h3 className="text-lg font-bold text-white">{req.requesterName} <span className="text-zinc-500 font-medium text-xs ml-1">@{req.requesterUsername}</span></h3>
+                                                    {req.message && <p className="text-xs text-zinc-500 italic mt-2">&ldquo;{req.message}&rdquo;</p>}
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-3 relative z-10">
                                                 <Button 
                                                     onClick={() => handleAction(req, 'approved')}
-                                                    className="bg-white text-black hover:bg-zinc-200 h-12 px-6 rounded-xl font-bold uppercase tracking-widest text-[10px]"
+                                                    className="bg-blue-600 text-white hover:bg-blue-700 border border-blue-500 h-10 px-5 rounded-xl font-sans font-semibold text-xs transition-colors"
                                                 >
-                                                    <Check className="w-3.5 h-3.5 mr-2" /> Approve
+                                                    <Check className="w-3 h-3 mr-2" /> Approve
                                                 </Button>
                                                 <Button 
                                                     variant="ghost"
                                                     onClick={() => handleAction(req, 'rejected')}
-                                                    className="bg-red-500/5 hover:bg-red-500/10 text-red-500 h-12 px-4 rounded-xl font-bold uppercase tracking-widest text-[10px]"
+                                                    className="bg-transparent hover:bg-red-950/20 text-red-500 border border-red-900/30 h-10 px-3 rounded-xl font-sans font-semibold text-xs"
                                                 >
-                                                    <X className="w-3.5 h-3.5" />
+                                                    <X className="w-3 h-3" />
                                                 </Button>
                                             </div>
                                         </motion.div>
@@ -302,28 +305,30 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {myIdeas.map(idea => (
                                 <Link key={idea.id} href={`/idea/${idea.id}`}>
-                                    <div className="p-6 rounded-[32px] bg-[#121218] border border-white/[0.04] hover:border-indigo-500/50 transition-all cursor-pointer space-y-6 group">
-                                        <div className="flex justify-between items-start">
-                                            <div className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[8px] font-black uppercase tracking-widest rounded-lg border border-indigo-500/20">
+                                    <div className="p-6 rounded-2xl bg-card border border-border hover:border-blue-500/40 transition-colors cursor-pointer space-y-6 group relative">
+                                        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                                        
+                                        <div className="flex justify-between items-start z-10 relative">
+                                            <div className="px-2 py-0.5 bg-white/5 text-zinc-400 text-[8px] font-bold font-mono uppercase tracking-widest rounded-none border border-white/10">
                                                 {idea.category}
                                             </div>
-                                            <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">v{idea.currentVersion || 1}</div>
+                                            <div className="text-[8px] font-bold font-mono text-zinc-600 uppercase tracking-widest">v{idea.currentVersion || 1}</div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">{idea.title}</h3>
-                                            <div className={`mt-2 inline-flex items-center text-[9px] font-black uppercase tracking-widest ${
-                                                idea.executionStatus === 'Launched' ? 'text-green-400' : 'text-indigo-400'
-                                            }`}>
-                                                <span className="w-1.5 h-1.5 rounded-full bg-current mr-2" />
+                                        
+                                        <div className="z-10 relative">
+                                            <h3 className="text-lg font-bold font-dot tracking-tight text-white group-hover:text-blue-300 transition-colors line-clamp-1">{idea.title}</h3>
+                                            <div className="mt-2 inline-flex items-center text-[8px] font-bold font-mono uppercase tracking-widest text-zinc-500">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.7)] mr-2" />
                                                 {idea.executionStatus}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                                        
+                                        <div className="flex items-center gap-4 pt-4 border-t border-white/10 z-10 relative font-mono">
                                             <div className="flex-1">
-                                                <p className="text-[10px] font-black text-white">{idea.views || 0}</p>
+                                                <p className="text-[11px] font-bold text-white">{idea.views || 0}</p>
                                                 <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-tight">Pulses</p>
                                             </div>
-                                            <ArrowUpRight className="w-5 h-5 group-hover:text-white transition-all transform group-hover:translate-x-1 group-hover:-translate-y-1 text-zinc-700" />
+                                            <ArrowUpRight className="w-4 h-4 text-zinc-700 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                                         </div>
                                     </div>
                                 </Link>
@@ -334,23 +339,26 @@ export default function DashboardPage() {
                     {/* ─── Collaborations ─── */}
                     <TabsContent value="collabs" className="animate-in fade-in-50 duration-500">
                         {collaborations.length === 0 ? (
-                            <div className="py-20 text-center bg-[#121218] rounded-[40px] border border-white/[0.02] space-y-4">
-                                <Users className="w-10 h-10 text-zinc-800 mx-auto" />
-                                <p className="text-zinc-600 font-medium tracking-widest uppercase text-[10px]">No active team memberships found.</p>
+                            <div className="py-20 text-center bg-black rounded-none border border-white/10 space-y-4 relative">
+                                <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                                <Users className="w-8 h-8 text-zinc-800 mx-auto" />
+                                <p className="text-zinc-600 font-mono tracking-widest uppercase text-[9px]">No active team memberships found.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {collaborations.map(idea => (
                                     <Link key={idea.id} href={`/idea/${idea.id}`}>
-                                        <div className="p-8 rounded-[36px] bg-[#121218] border border-white/[0.04] hover:border-green-500/50 transition-all cursor-pointer flex items-center justify-between group">
-                                            <div className="space-y-2">
-                                                <p className="text-[9px] font-black text-green-400 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Team Operational
+                                        <div className="p-8 rounded-2xl bg-card border border-border hover:border-blue-500/40 transition-colors cursor-pointer flex items-center justify-between group relative">
+                                            <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
+                                            <div className="space-y-2 z-10 relative font-mono">
+                                                <p className="text-[8px] font-bold text-red-600 uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse" /> Team Operational
                                                 </p>
-                                                <h3 className="text-2xl font-bold text-white group-hover:text-green-400 transition-colors">{idea.title}</h3>
-                                                <p className="text-xs text-zinc-500">Role: Contributor • Status: {idea.executionStatus}</p>
+                                                <h3 className="text-xl font-bold font-dot tracking-tight text-white group-hover:text-blue-300 transition-colors">{idea.title}</h3>
+                                                <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Role: Contributor • Status: {idea.executionStatus}</p>
                                             </div>
-                                            <ChevronRight className="w-6 h-6 text-zinc-800 group-hover:text-white transition-all" />
+                                            <ChevronRight className="w-5 h-5 text-zinc-800 group-hover:text-white transition-colors z-10 relative" />
                                         </div>
                                     </Link>
                                 ))}
@@ -358,29 +366,38 @@ export default function DashboardPage() {
                         )}
                     </TabsContent>
 
-                    {/* ─── Security & Audit ─── */}
+                    {/* ─── Security & Audit logs ─── */}
                     <TabsContent value="audit" className="animate-in fade-in-50 duration-500">
-                        <section className="p-10 rounded-[40px] bg-[#121218] border border-white/[0.04] shadow-2xl space-y-8">
-                            <h2 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.5em] mb-6">Traceability Engine Logs</h2>
+                        {/* Styled like a raw terminal block */}
+                        <section className="p-6 sm:p-10 rounded-2xl bg-card border border-border shadow-2xl space-y-6 relative overflow-hidden">
+                            <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
+                            <div className="flex items-center justify-between z-10 relative">
+                                <h2 className="text-[9px] font-bold font-mono text-zinc-500 uppercase tracking-[0.5em]">Traceability Engine Logs</h2>
+                                <div className="flex items-center gap-2 text-[8px] font-mono text-zinc-600 uppercase">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_4px_rgba(34,197,94,0.5)]"></span>
+                                    SYSTEM ONLINE
+                                </div>
+                            </div>
                             
                             {auditLogs.length === 0 ? (
-                                <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest text-center py-10">No recent security interactions recorded.</p>
+                                <p className="text-zinc-700 font-mono text-[9px] uppercase tracking-widest text-center py-10 z-10 relative">No recent security interactions recorded.</p>
                             ) : (
-                                <div className="space-y-4">
-                                    {auditLogs.map(log => (
-                                        <div key={log.id} className="flex items-center justify-between py-4 border-b border-white/[0.03]">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-white/[0.02] flex items-center justify-center border border-white/5 text-indigo-400">
-                                                    {log.type === 'nda' ? <Shield className="w-4 h-4 text-green-400" /> : <Eye className="w-4 h-4" />}
-                                                </div>
+                                <div className="space-y-2 z-10 relative font-mono text-[10px] border border-white/5 p-4 bg-zinc-950/20 max-h-[400px] overflow-y-auto hide-scrollbar">
+                                    {auditLogs.map((log, idx) => (
+                                        <div key={log.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-white/[0.03] text-zinc-400 gap-1 hover:text-white transition-colors">
+                                            <div className="flex items-start gap-2">
+                                                <span className="text-zinc-600">[{idx.toString().padStart(3, '0')}]</span>
                                                 <div>
-                                                    <p className="text-sm font-bold text-white">{log.userName} <span className="text-zinc-600 font-medium">@{log.userUsername}</span></p>
-                                                    <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-tighter">
-                                                        {log.type === 'nda' ? 'Accepted Soft NDA' : 'Viewed Execution Plan'} • {log.ideaTitle}
-                                                    </p>
+                                                    <span className="text-white font-bold">{log.userName}</span>
+                                                    <span className="text-zinc-500"> (@{log.userUsername})</span>
+                                                    <span className={log.type === 'nda' ? 'text-green-500' : 'text-zinc-400'}>
+                                                        {log.type === 'nda' ? ' Accepted Soft NDA' : ' Accessed Execution Plan'}
+                                                    </span>
+                                                    <span className="text-zinc-600"> &ldquo;{log.ideaTitle}&rdquo;</span>
                                                 </div>
                                             </div>
-                                            <p className="text-[9px] font-black text-zinc-700 uppercase">
+                                            <p className="text-[8px] text-zinc-500 uppercase shrink-0">
                                                 {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : 'Recent'}
                                             </p>
                                         </div>

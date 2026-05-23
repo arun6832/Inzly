@@ -94,38 +94,39 @@ export default function SavedIdeasPage() {
     };
 
     if (loading || fetching) {
-        return <div className="flex-1 flex justify-center items-center bg-[#0B0B0F]">
-            <div className="w-8 h-8 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+        return <div className="flex-1 flex justify-center items-center bg-background">
+            <div className="w-8 h-8 rounded-full border-t-2 border-blue-500 animate-spin"></div>
         </div>;
     }
 
     if (!user) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-[#0B0B0F]">
-                <h2 className="text-2xl font-bold text-white mb-4">Please log in to view your saved ideas.</h2>
+            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-background">
+                <h2 className="text-2xl font-bold font-dot tracking-tight text-foreground mb-4">Please log in to view your saved ideas.</h2>
                 <Link href="/login">
-                    <Button className="bg-gradient-to-tr from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-full px-8">Log In</Button>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-11 font-semibold">Log In</Button>
                 </Link>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 overflow-x-hidden min-h-screen bg-[#0B0B0F] px-4 py-8 relative">
-            <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex-1 overflow-x-hidden min-h-screen bg-background nothing-grid px-4 py-8 pt-28 relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[400px] pointer-events-none z-0 nothing-radial-glow opacity-40" />
+            <div className="max-w-5xl mx-auto space-y-8 relative z-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
                     <div className="flex items-center">
                         <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mr-4">
                             <Bookmark className="w-6 h-6 text-purple-400" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-extrabold text-white tracking-tight">Saved Ideas</h1>
-                            <p className="text-zinc-400 mt-1">Ideas you swiped right on.</p>
+                            <h1 className="text-3xl font-black font-dot tracking-tight text-foreground">Saved Ideas</h1>
+                            <p className="text-muted-foreground mt-1">Ideas you swiped right on.</p>
                         </div>
                     </div>
 
                     {userData && (
-                        <div className="flex items-center space-x-4 bg-[#121218] border border-white/[0.04] p-4 rounded-[24px]">
+                        <div className="flex items-center space-x-4 bg-card border border-border p-4 rounded-2xl">
                             <div className="flex items-center text-zinc-300">
                                 <User className="w-5 h-5 mr-2 text-blue-400" />
                                 <span className="font-semibold">{userData.name || "User"}</span>
@@ -141,22 +142,22 @@ export default function SavedIdeasPage() {
                 </div>
 
                 {savedIdeas.length === 0 ? (
-                    <div className="text-center py-24 bg-[#121218] rounded-[32px] border border-white/[0.02]">
-                        <h2 className="text-xl font-bold text-white mb-2">No saved ideas yet</h2>
-                        <p className="text-zinc-500 mb-6">Start discovering ideas and swipe right to save them.</p>
+                    <div className="text-center py-24 bg-card rounded-2xl border border-border">
+                        <h2 className="text-xl font-bold font-dot tracking-tight text-foreground mb-2">No saved ideas yet</h2>
+                        <p className="text-muted-foreground mb-6">Start discovering ideas and swipe right to save them.</p>
                         <Link href="/">
-                            <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 font-bold shadow-lg transition-transform hover:scale-105">Discover Ideas</Button>
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-11 font-semibold shadow-lg transition-transform hover:scale-105">Discover Ideas</Button>
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {savedIdeas.map((idea) => (
-                            <div key={idea.id} className="bg-[#121218] border border-white/[0.04] rounded-[28px] p-6 hover:border-purple-500/30 transition-colors flex flex-col items-start text-left h-full shadow-xl relative overflow-hidden group">
+                            <div key={idea.id} className="bg-card border border-border rounded-2xl p-6 hover:border-blue-500/30 transition-colors flex flex-col items-start text-left h-full shadow-lg relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors pointer-events-none"></div>
-                                <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-white/[0.05] text-white/70 mb-5 relative z-10">
+                                <span className="px-3 py-1 rounded-lg text-[10px] uppercase tracking-wider font-bold bg-white/[0.05] text-white/70 mb-5 relative z-10">
                                     {idea.category}
                                 </span>
-                                <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight relative z-10">
+                                <h3 className="text-xl font-bold font-dot tracking-tight text-foreground mb-3 line-clamp-2 leading-tight relative z-10">
                                     {idea.title}
                                 </h3>
                                 <p className="text-zinc-400 line-clamp-3 mb-6 flex-1 text-sm leading-relaxed relative z-10">

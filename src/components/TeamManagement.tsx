@@ -86,7 +86,7 @@ export default function TeamManagement({ ideaId, ideaTitle, creatorId }: { ideaI
                 ) : (
                     <div className="space-y-3">
                         {pending.map(req => (
-                            <div key={req.id} className="p-6 rounded-3xl bg-[#0a0a0c] border border-white/[0.05] hover:border-indigo-500/20 transition-all space-y-4">
+                            <div key={req.id} className="p-6 rounded-2xl bg-[#0a0a0c] border border-white/[0.05] hover:border-indigo-500/20 transition-all space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">

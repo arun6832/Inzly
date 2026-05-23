@@ -37,18 +37,16 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
     const router = useRouter();
 
     const x = useMotionValue(0);
-    // Gentler rotation — max ±12° at ±300px drag
-    const rotate = useTransform(x, [-300, 0, 300], [-12, 0, 12]);
+    // Gentler rotation — max ±8° at ±300px drag
+    const rotate = useTransform(x, [-300, 0, 300], [-8, 0, 8]);
     // Keep full opacity during drag, only dim slightly at extremes
     const cardOpacity = useTransform(x, [-300, -150, 0, 150, 300], [0.85, 1, 1, 1, 0.85]);
     // Subtle scale breathing during drag
-    const dragScale = useTransform(x, [-300, 0, 300], [0.95, 1, 0.95]);
+    const dragScale = useTransform(x, [-300, 0, 300], [0.98, 1, 0.98]);
 
-    // Subtle swipe indicators (no gamified neon)
-    const saveOpacity = useTransform(x, [0, 60, 150], [0, 0.3, 0.8]);
-    const skipOpacity = useTransform(x, [-150, -60, 0], [0.8, 0.3, 0]);
-
-    const bgGlowX = useTransform(x, [-200, 0, 200], [-30, 0, 30]);
+    // Subtle swipe indicators (clean outlines, no neon glows)
+    const saveOpacity = useTransform(x, [0, 60, 150], [0, 0.3, 0.9]);
+    const skipOpacity = useTransform(x, [-150, -60, 0], [0.9, 0.3, 0]);
 
     const performSwipe = useCallback((dir: "left" | "right") => {
         if (exiting) return;
@@ -70,7 +68,7 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
         const velocity = info.velocity.x;
         const offset = info.offset.x;
 
-        // Swipe if past threshold OR if velocity is high enough (flick gesture)
+        // Swipe if past threshold OR if velocity is high enough
         if (offset > SWIPE_THRESHOLD || velocity > 500) {
             performSwipe("right");
         } else if (offset < -SWIPE_THRESHOLD || velocity < -500) {
@@ -103,56 +101,52 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
             dragElastic={0.9}
             dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
             onDragEnd={handleDragEnd}
-            initial={active ? { scale: 1, y: 0 } : { scale: 0.95, y: 8 }}
+            initial={active ? { scale: 1, y: 0 } : { scale: 0.98, y: 6 }}
             animate={
                 exiting
                     ? {} // Let the imperative animate() handle exit
                     : active
                     ? { scale: 1, y: 0, opacity: 1 }
-                    : { scale: 0.95, y: 8, opacity: 0.6 }
+                    : { scale: 0.98, y: 6, opacity: 0.5 }
             }
             transition={{
                 type: "spring",
                 stiffness: 400,
                 damping: 30,
             }}
-            className={`absolute inset-0 flex flex-col justify-between bg-[#121218]/80 backdrop-blur-md border border-white/[0.06] rounded-[32px] shadow-2xl p-6 sm:p-8 cursor-grab active:cursor-grabbing overflow-hidden ${!active ? 'pointer-events-none' : ''}`}
+            className={`absolute inset-0 flex flex-col justify-between bg-card border border-border rounded-3xl shadow-2xl p-6 sm:p-8 cursor-grab active:cursor-grabbing overflow-hidden ${!active ? 'pointer-events-none' : ''}`}
         >
-            <motion.div 
-                style={{ x: bgGlowX }}
-                className="absolute inset-0 z-0 pointer-events-none blur-[100px] opacity-40 mix-blend-screen"
-            >
-                <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-purple-500/30 rounded-full" />
-                <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-blue-500/30 rounded-full" />
-            </motion.div>
+            {/* Structural hairline graph grid within the card chassis */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[linear-gradient(rgba(59,130,246,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.05)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
             {/* Swipe Direction Indicators */}
             {active && (
                 <>
                     {/* LIKE overlay */}
                     <motion.div
                         style={{ opacity: saveOpacity }}
-                        className="absolute inset-0 rounded-[32px] border-[3px] border-emerald-500/50 bg-gradient-to-r from-transparent to-emerald-500/10 pointer-events-none z-20 flex items-start justify-start p-8"
+                        className="absolute inset-0 rounded-3xl border border-blue-500/30 bg-card/90 pointer-events-none z-20 flex items-center justify-center p-8"
                     >
-                        <div className="px-5 py-2 rounded-xl border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)] text-emerald-400 font-black text-2xl tracking-widest rotate-[-12deg] uppercase backdrop-blur-md">
-                            LIKE
+                        <div className="px-6 py-3 border border-blue-500 text-blue-400 font-sans font-bold text-3xl tracking-[0.2em] rotate-[-5deg] uppercase bg-card rounded-xl">
+                          SAVE CONCEPT
                         </div>
                     </motion.div>
                     {/* NOPE overlay */}
                     <motion.div
                         style={{ opacity: skipOpacity }}
-                        className="absolute inset-0 rounded-[32px] border-[3px] border-rose-500/50 bg-gradient-to-l from-transparent to-rose-500/10 pointer-events-none z-20 flex items-start justify-end p-8"
+                        className="absolute inset-0 rounded-3xl border border-red-500/30 bg-card/90 pointer-events-none z-20 flex items-center justify-center p-8"
                     >
-                        <div className="px-5 py-2 rounded-xl border-2 border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)] text-rose-400 font-black text-2xl tracking-widest rotate-[12deg] uppercase backdrop-blur-md">
-                            NOPE
+                        <div className="px-6 py-3 border border-red-600 text-red-600 font-sans font-bold text-3xl tracking-[0.2em] rotate-[5deg] uppercase bg-card rounded-xl">
+                          SKIP CONCEPT
                         </div>
                     </motion.div>
                 </>
             )}
 
             <div className="flex-1 overflow-y-auto space-y-6 select-none hide-scrollbar relative z-10">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-bold font-mono bg-white/5 text-zinc-400 border border-border uppercase tracking-wider">
                             {idea.category}
                         </span>
                         {idea.authorUsername && (
@@ -161,86 +155,80 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                                     e.stopPropagation();
                                     router.push(`/user/${idea.authorUsername}`);
                                 }}
-                                className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/5 text-[10px] font-bold text-zinc-500 hover:text-white border border-white/5 transition-all uppercase tracking-widest"
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-background text-[9px] font-mono font-bold text-zinc-500 hover:text-white border border-border transition-colors uppercase tracking-wider"
                             >
                                 <User className="w-2.5 h-2.5" />
-                            {idea.authorUsername}
-                            {idea.authorTrustScore && idea.authorTrustScore >= 95 && (
-                                <ShieldAlert className="w-2.5 h-2.5 text-indigo-400 fill-indigo-400/20" />
-                            )}
-                        </button>
+                                <span>{idea.authorUsername}</span>
+                                {idea.authorTrustScore && idea.authorTrustScore >= 95 && (
+                                    <ShieldAlert className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                                )}
+                            </button>
                         )}
                         
                         {/* Integrity Pulse */}
                         {idea.authorTrustScore !== undefined && (
-                            <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
-                                <div className={`w-1 h-1 rounded-full transition-shadow duration-1000 ${
-                                    idea.authorTrustScore >= 90 ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' :
-                                    idea.authorTrustScore >= 70 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' :
-                                    'bg-orange-500'
-                                }`} />
-                                <span className="text-[9px] font-black text-zinc-400">{idea.authorTrustScore}</span>
+                            <div className="flex items-center gap-1.5 bg-background px-2 py-0.5 rounded-lg border border-border font-mono text-[9px] text-zinc-500">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.7)]" />
+                                <span className="font-bold text-zinc-400">{idea.authorTrustScore} SCORE</span>
                             </div>
                         )}
                         
                         {/* Visibility Badge */}
-                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-lg shadow-black/20 ${
-                            idea.visibility === 'public' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
-                            idea.visibility === 'restricted' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
-                            'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
-                        }`}>
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider border border-border bg-background text-zinc-400">
                             {idea.visibility === 'public' ? <Eye className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                            {idea.visibility === 'public' ? 'Public' : idea.visibility === 'restricted' ? 'Restricted' : 'Investor'}
+                            <span>{idea.visibility || 'public'}</span>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-3 text-zinc-400 text-sm font-medium">
-                        <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
-                            <Heart className="w-3.5 h-3.5 mr-1 text-zinc-300" />
+
+                    <div className="flex items-center space-x-2 text-zinc-500 text-xs font-mono">
+                        <div className="flex items-center bg-background border border-border px-2 py-0.5 rounded-lg">
+                            <Heart className="w-3 h-3 mr-1 text-zinc-400" />
                             {idea.likesCount || 0}
                         </div>
-                        <div className="flex items-center bg-white/5 px-2 py-1 rounded-full">
-                            <span className="mr-1 text-zinc-300">👁️</span>
+                        <div className="flex items-center bg-background border border-border px-2 py-0.5 rounded-lg">
+                            <span className="mr-1 text-[10px]">👁</span>
                             {idea.views || 0}
                         </div>
                         {idea.githubUrl && (
                             <Link href={idea.githubUrl} target="_blank" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full group/gh transition-colors">
-                                    <Github className="w-3.5 h-3.5 text-zinc-400 group-hover/gh:text-white" />
+                                <div className="flex items-center bg-background border border-border hover:bg-white hover:text-black px-2 py-0.5 rounded-lg transition-colors group/gh">
+                                    <Github className="w-3 h-3 text-zinc-400 group-hover/gh:text-black" />
                                 </div>
                             </Link>
                         )}
                         <Link href={`/idea/${idea.id}`} target="_blank">
-                            <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white h-7 w-7 rounded-full ml-1">
-                                <ExternalLink className="w-4 h-4" />
+                            <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white h-6.5 w-6.5 rounded-lg bg-background border border-border p-0 hover:bg-white/5">
+                                <ExternalLink className="w-3.5 h-3.5" />
                             </Button>
                         </Link>
                     </div>
                 </div>
 
-                <h2 className="text-3xl font-bold text-white leading-tight">
+                <h2 className="text-2xl sm:text-3xl font-bold font-sans tracking-tight text-white leading-tight uppercase">
                     {idea.title}
                 </h2>
 
                 <div className="space-y-4">
-                    <div>
-                        <p className="text-zinc-300 text-lg leading-relaxed line-clamp-6">{idea.idea}</p>
-                    </div>
+                    <p className="text-zinc-400 font-sans text-sm sm:text-base leading-relaxed line-clamp-6">{idea.idea}</p>
                 </div>
             </div>
 
-            <div className="pt-6 mt-4 flex justify-between items-center px-2 relative z-10">
+            {/* Bottom Controls: Tactile Dial buttons & monochrome pills */}
+            <div className="pt-6 mt-4 flex justify-between items-center px-1 relative z-10 border-t border-border">
+                {/* Manual Skip - Tactile circular outline dial */}
                 <Button
                     onClick={() => handleManualSwipe("left")}
                     size="icon"
                     variant="outline"
-                    className="w-14 h-14 rounded-full border border-white/[0.05] bg-white/[0.02] text-zinc-400 hover:bg-white/[0.05] hover:text-white transition-all duration-300 transform hover:scale-105 shadow-md"
+                    className="w-12 h-12 rounded-full border border-white/20 bg-transparent text-zinc-400 hover:bg-white hover:text-black hover:border-white transition-all shadow-md flex items-center justify-center"
+                    title="Skip Concept"
                 >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                 </Button>
 
                 <div className="flex items-center space-x-2">
                     <Link href={`/idea/${idea.id}`}>
-                        <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08] px-6">
+                        <Button variant="ghost" className="text-zinc-400 hover:text-white text-[9px] font-mono uppercase tracking-widest font-bold rounded-lg bg-card border border-border hover:bg-white/5 px-4 h-9">
                             Read Details
                         </Button>
                     </Link>
@@ -251,7 +239,6 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                             e.stopPropagation();
                             const { getOrCreateChat } = await import("@/lib/messaging");
                             if (!active) return;
-                            // Check if current user is founder
                             const { auth } = await import("@/lib/firebase");
                             const currentUser = auth.currentUser;
                             if (!currentUser) {
@@ -265,9 +252,10 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                             const chatId = await getOrCreateChat(currentUser.uid, idea.userId);
                             window.location.href = `/messages/${chatId}`;
                         }}
-                        className="text-zinc-400 hover:text-white rounded-full bg-white/[0.03] hover:bg-white/[0.08]"
+                        className="text-zinc-400 hover:text-white rounded-lg bg-card border border-border hover:bg-white/5 w-9 h-9 flex items-center justify-center p-0"
+                        title="Chat with Architect"
                     >
-                        <MessageSquare className="w-4 h-4" />
+                        <MessageSquare className="w-3.5 h-3.5" />
                     </Button>
                     <Button 
                         size="icon" 
@@ -277,19 +265,21 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                             if (!active) return;
                             alert("Reporting system active. Visit idea detail to file a priority report.");
                         }}
-                        className="text-red-500/40 hover:text-red-400 hover:bg-red-500/10 rounded-full h-10 w-10"
+                        className="text-red-500/50 hover:text-red-400 rounded-lg bg-card border border-red-500/10 hover:bg-red-500/5 w-9 h-9 flex items-center justify-center p-0"
                         title="Report Misuse"
                     >
-                        <Flag className="w-4 h-4" />
+                        <Flag className="w-3.5 h-3.5" />
                     </Button>
                 </div>
 
+                {/* Manual Like - Tactile solid white dial button */}
                 <Button
                     onClick={() => handleManualSwipe("right")}
                     size="icon"
-                    className="w-14 h-14 rounded-full border-2 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-[0_0_20px_rgba(16,185,129,0.3)] shadow-emerald-500/20 flex items-center justify-center p-0"
+                    className="w-12 h-12 rounded-full bg-white text-black hover:bg-black hover:text-white hover:border hover:border-white transition-all shadow-md flex items-center justify-center p-0"
+                    title="Save Concept"
                 >
-                    <Heart className="w-7 h-7 fill-current" />
+                    <Heart className="w-5 h-5 fill-current" />
                 </Button>
             </div>
         </motion.div>

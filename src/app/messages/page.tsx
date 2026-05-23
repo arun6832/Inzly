@@ -72,15 +72,15 @@ export default function MessagesDashboard() {
                             placeholder="Find founder..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 bg-white/[0.03] border-white/5 text-white rounded-full h-10 focus:ring-1 focus:ring-indigo-500"
+                            className="pl-10 bg-white/[0.03] border-white/5 text-white rounded-xl h-10 focus:ring-1 focus:ring-indigo-500"
                         />
                     </div>
                 </header>
 
                 <div className="grid grid-cols-1 gap-3">
                     {filteredChats.length === 0 ? (
-                        <div className="text-center py-24 bg-[#121218] border border-white/[0.04] rounded-[32px] space-y-4">
-                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                        <div className="text-center py-24 bg-[#121218] border border-white/[0.04] rounded-2xl space-y-4">
+                            <div className="w-16 h-16 bg-white/5 rounded-xl flex items-center justify-center mx-auto">
                                 <MessageSquare className="w-8 h-8 text-zinc-600" />
                             </div>
                             <div>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import PreviewSwipeCard from "@/components/PreviewSwipeCard";
 import { PRECISE_AI_NEWS } from "@/lib/constants";
+
 interface Idea {
   id: string;
   title: string;
@@ -19,8 +20,13 @@ interface Idea {
   likesCount?: number;
   githubUrl?: string;
   authorUsername?: string;
+  authorName?: string;
+  authorBio?: string;
+  authorMode?: string;
+  authorCountry?: string;
+  authorTotalLikes?: number;
   authorTrustScore?: number;
-  visibility?: string;
+  visibility?: "public" | "restricted" | "investor";
 }
 
 export default function Home() {
@@ -82,7 +88,12 @@ export default function Home() {
             return {
                 ...idea,
                 authorUsername: authorData?.username || "unknown",
-                authorTrustScore: authorData?.trustScore || 100
+                authorName: authorData?.name || "",
+                authorBio: authorData?.bio || "",
+                authorMode: authorData?.mode || "explorer",
+                authorCountry: authorData?.country || "",
+                authorTotalLikes: authorData?.totalLikes || 0,
+                authorTrustScore: authorData?.trustScore || 100,
             };
         }));
         
@@ -98,7 +109,7 @@ export default function Home() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { getCountFromServer, doc, getDoc, updateDoc, increment, setDoc } = await import("firebase/firestore");
+        const { getCountFromServer, doc, getDoc, updateDoc, increment } = await import("firebase/firestore");
         const userCountSnap = await getCountFromServer(collection(db, "users"));
         setUserCount(userCountSnap.data().count);
         const statsRef = doc(db, "siteStats", "globals");
@@ -157,9 +168,13 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-[#050507] w-full px-4 text-center">
-        <h3 className="text-2xl sm:text-3xl font-black text-white italic max-w-xl">&ldquo;{loadingNews}&rdquo;</h3>
-        <p className="mt-8 text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em] animate-pulse">Intelligence Stream</p>
+      <div className="fixed inset-0 z-[100] flex flex-col justify-center items-center bg-background w-full px-4 text-center nothing-grid">
+        <h3 className="text-xl sm:text-2xl font-dot uppercase tracking-widest text-white max-w-xl">&ldquo;{loadingNews}&rdquo;</h3>
+        <p className="mt-8 text-[9px] text-zinc-500 font-mono uppercase tracking-[0.4em] flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
+          Intelligence Stream Loading
+        </p>
       </div>
     );
   }
@@ -168,43 +183,35 @@ export default function Home() {
     const previewIdea = ideas[0];
 
     return (
-      <div className="flex-1 flex flex-col relative w-full overflow-hidden">
-        {/* Living Animated Background */}
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute top-[15%] left-[10%] w-[45vh] h-[45vh] bg-indigo-600/10 rounded-full mix-blend-screen blur-[80px] animate-blob animate-pulse-glow"></div>
-          <div className="absolute top-[10%] right-[15%] w-[40vh] h-[40vh] bg-blue-500/10 rounded-full mix-blend-screen blur-[70px] animate-blob-slow animation-delay-2000 animate-pulse-glow"></div>
-          <div className="absolute bottom-[15%] left-[25%] w-[50vh] h-[50vh] bg-purple-600/8 rounded-full mix-blend-screen blur-[90px] animate-blob-fast animation-delay-4000 animate-pulse-glow"></div>
-          <div className="absolute top-1/3 left-0 w-[200%] h-[30vh] bg-gradient-to-r from-transparent via-indigo-500/[0.03] to-transparent animate-aurora"></div>
-        </div>
-
-        {/* ─── Extreme Edge Environmental Elements (Minimal) ─── */}
+      <div className="flex-1 flex flex-col relative w-full overflow-hidden bg-background nothing-grid">
+        {/* ─── Extreme Edge Environmental Elements ─── */}
         <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden hidden md:block">
           {/* Vertical Edge Left */}
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-30 group">
-            <div className="w-px h-24 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
-            <span className="[writing-mode:vertical-rl] text-[9px] font-black tracking-[0.5em] text-white/50 animate-pulse-glow">INZLY // ECOSYSTEM</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
+          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-35 group">
+            <div className="w-px h-24 bg-blue-500/20"></div>
+            <span className="[writing-mode:vertical-rl] text-[8px] font-mono tracking-[0.5em] text-zinc-500 uppercase">INZLY // ECOSYSTEM</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)]"></div>
           </div>
           
           {/* Vertical Edge Right */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-30 group">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping"></div>
-            <span className="[writing-mode:vertical-rl] rotate-180 text-[9px] font-black tracking-[0.5em] text-white/50 animate-pulse-glow">STUDENT PATH // DISCOVER</span>
-            <div className="w-px h-24 bg-gradient-to-b from-transparent via-white/40 to-transparent"></div>
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-35 group">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)]"></div>
+            <span className="[writing-mode:vertical-rl] rotate-180 text-[8px] font-mono tracking-[0.5em] text-zinc-500 uppercase">STUDENT PATH // DISCOVER</span>
+            <div className="w-px h-24 bg-red-500/20"></div>
           </div>
         </div>
 
-        {/* ─── Global Structural Lines (Edge Definition) ─── */}
+        {/* ─── Global Structural Lines ─── */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute left-[calc(50%-700px)] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent hidden xl:block"></div>
-          <div className="absolute right-[calc(50%-700px)] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent hidden xl:block"></div>
+          <div className="absolute left-[calc(50%-700px)] top-0 bottom-0 w-px bg-white/5 hidden xl:block"></div>
+          <div className="absolute right-[calc(50%-700px)] top-0 bottom-0 w-px bg-white/5 hidden xl:block"></div>
           
           {/* Mobile structural lines */}
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.02] to-transparent block xl:hidden"></div>
-          <div className="absolute right-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.02] to-transparent block xl:hidden"></div>
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-white/5 block xl:hidden"></div>
+          <div className="absolute right-4 top-0 bottom-0 w-px bg-white/5 block xl:hidden"></div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-none 2xl:px-16 mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-none 2xl:px-16 mx-auto px-4 lg:px-8 z-10 relative">
           
           {/* Left Column: The Innovator Nexus (Desktop Only) */}
           <motion.div 
@@ -213,19 +220,19 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="hidden lg:flex flex-col space-y-8 pt-12"
           >
-            <div className="space-y-6 max-w-[280px]">
-              <h4 className="text-white/30 font-black uppercase tracking-[0.4em] text-[8px]">The Innovator Nexus</h4>
-              <p className="text-[12px] text-zinc-500 font-medium leading-relaxed">
+            <div className="bg-card border border-border rounded-3xl p-6 lg:p-8 space-y-6">
+              <h4 className="text-zinc-500 font-mono font-bold uppercase tracking-[0.4em] text-[8px]">The Innovator Nexus</h4>
+              <p className="text-[11px] text-zinc-400 font-mono leading-relaxed">
                 Whether you’re a **Startup Builder** planting seeds, an **Ideathon participant** searching for original concepts, or a founder seeking technical co-founders, Inzly provides the nutrient-dense soil for growth.
               </p>
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2 pt-4 border-t border-border font-mono">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Ideathon Ready</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Ideathon Ready</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-indigo-500/50"></div>
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Builder Network</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Builder Network</span>
                 </div>
               </div>
             </div>
@@ -240,33 +247,33 @@ export default function Home() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="inline-flex items-center px-3 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/10 text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1"
+                className="inline-flex items-center px-3 py-1 border border-border bg-card text-[9px] font-mono font-bold text-zinc-400 uppercase tracking-widest mb-1 rounded-full"
               >
-                <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)] mr-2" />
                 Trending Now
               </motion.div>
               <motion.h2
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-3xl font-black text-white tracking-tight"
+                className="text-3xl font-bold font-dot tracking-tight text-white"
               >
                 Discover Ideas
               </motion.h2>
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-zinc-500 text-sm font-medium flex items-center justify-center gap-4"
+                className="text-zinc-500 text-xs font-mono flex flex-col sm:flex-row items-center justify-center gap-3 mt-1"
               >
-                <span>Swipe to explore · Sign up to unlock the full feed</span>
+                <span className="uppercase tracking-wide">Swipe to explore · Sign up for full feed</span>
                 {visitorCount !== null && (
-                  <span className="flex items-center text-indigo-400/80 bg-indigo-500/5 px-2 py-0.5 rounded-md border border-indigo-500/10 text-[10px] font-bold uppercase tracking-wider">
-                    <span className="w-1 h-1 rounded-full bg-indigo-400 mr-1.5 animate-pulse" />
-                    {visitorCount.toLocaleString()} Total Visitors
+                  <span className="flex items-center text-white bg-blue-500/5 px-2.5 py-0.5 border border-blue-500/15 text-[9px] font-bold uppercase tracking-wider rounded-full">
+                    <span className="w-1 h-1 rounded-full bg-blue-500 animate-blue-pulse mr-1.5" />
+                    {visitorCount.toLocaleString()} Live Visitors
                   </span>
                 )}
-              </motion.p>
+              </motion.div>
             </div>
 
             {/* Preview Card Area */}
@@ -279,13 +286,13 @@ export default function Home() {
               {previewIdea ? (
                 <PreviewSwipeCard idea={previewIdea} />
               ) : (
-                <div className="text-center space-y-6 bg-[#121218] border border-white/[0.04] rounded-[32px] p-10 shadow-xl w-full">
-                  <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-2 border border-white/[0.05]">
-                    <span className="text-4xl">🌱</span>
+                <div className="text-center space-y-6 bg-card border border-border rounded-3xl p-10 shadow-xl w-full">
+                  <div className="w-20 h-20 bg-blue-500/5 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-blue-500/15">
+                    <span className="font-dot text-4xl text-white">🌱</span>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-extrabold text-white mb-2">Ideas are loading</h2>
-                    <p className="text-zinc-400 text-sm">Fresh startup ideas are on the way...</p>
+                    <h2 className="text-xl font-bold font-sans tracking-tight text-white mb-2 uppercase">Ideas are loading</h2>
+                    <p className="text-zinc-500 text-xs font-mono">Fresh startup ideas are on the way...</p>
                   </div>
                 </div>
               )}
@@ -298,25 +305,25 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="w-full mt-8 space-y-4"
             >
-              <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs font-medium">
-                <div className="h-px flex-1 bg-white/[0.06]" />
+              <div className="flex items-center justify-center gap-2 text-zinc-500 text-[9px] font-mono">
+                <div className="h-px flex-1 bg-white/10" />
                 <span className="uppercase tracking-widest">
                   Join {userCount ? `${userCount.toLocaleString()}+` : "1,500+"} innovators
                 </span>
-                <div className="h-px flex-1 bg-white/[0.06]" />
+                <div className="h-px flex-1 bg-white/10" />
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button
                   onClick={() => window.location.href = "/signup"}
-                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-full px-10 h-12 font-semibold shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02]"
+                  className="w-full sm:w-auto bg-white text-black hover:bg-black hover:text-white border border-white rounded-none px-10 h-12 font-mono uppercase tracking-widest text-xs font-bold transition-all"
                 >
                   Create Free Account
                 </Button>
                 <Button
                   onClick={() => window.location.href = "/login"}
                   variant="ghost"
-                  className="w-full sm:w-auto text-zinc-400 hover:text-white rounded-full px-8 h-10 font-medium transition-all"
+                  className="w-full sm:w-auto text-zinc-500 hover:text-white rounded-none px-8 h-10 font-mono uppercase tracking-widest text-xs font-bold transition-all"
                 >
                   Log In
                 </Button>
@@ -331,19 +338,19 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="hidden lg:flex flex-col space-y-8 pt-12 text-right items-end"
           >
-            <div className="space-y-6 max-w-[280px]">
-              <h4 className="text-white/30 font-black uppercase tracking-[0.4em] text-[8px]">Ecosystem Access</h4>
-              <p className="text-[12px] text-zinc-500 font-medium leading-relaxed">
-                **Investors** track emerging sectors, while **Hackathon seekers** find validated problems to solve. For students, it's an industrial laboratory to deconstruct real-world projects and build a resume that recruiters can&apos;t ignore.
+            <div className="bg-card border border-border rounded-3xl p-6 lg:p-8 space-y-6">
+              <h4 className="text-zinc-500 font-mono font-bold uppercase tracking-[0.4em] text-[8px]">Ecosystem Access</h4>
+              <p className="text-[11px] text-zinc-400 font-mono leading-relaxed">
+                **Investors** track emerging sectors, while **Hackathon seekers** find validated problems to solve. For students, it's an industrial laboratory to deconstruct real-world projects and build a resume.
               </p>
-              <div className="space-y-2 pt-2 flex flex-col items-end">
+              <div className="space-y-2 pt-4 border-t border-border font-mono flex flex-col items-end">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Investor View</span>
-                  <div className="w-1 h-1 rounded-full bg-purple-500/50"></div>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Investor View</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Hackathon Seeds</span>
-                  <div className="w-1 h-1 rounded-full bg-purple-500/50"></div>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Hackathon Seeds</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
                 </div>
               </div>
             </div>
@@ -352,30 +359,29 @@ export default function Home() {
         </div>
 
         {/* Scroll hint */}
-        <div className="relative z-10 flex flex-col items-center text-zinc-500/60 pb-8 animate-bounce">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] mb-3">Flow Downwards</span>
-          <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="relative z-10 flex flex-col items-center text-zinc-500/60 pb-8 animate-bounce mt-4">
+          <span className="text-[8px] font-mono uppercase tracking-[0.3em] mb-3">Flow Downwards</span>
+          <svg className="w-4 h-4 opacity-50 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
 
         {/* Scrollable Storytelling Content */}
         <div className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-40 pt-20">
-          <div className="space-y-[30vh]">
+          <div className="space-y-[25vh]">
             
             <motion.section 
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="min-h-[50vh] flex flex-col justify-center items-center text-center relative"
+              className="min-h-[40vh] flex flex-col justify-center items-center text-center relative"
             >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] min-w-[350px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.15)_0%,transparent_70%)] pointer-events-none animate-organic-blob"></div>
-              <h3 className="text-4xl md:text-6xl lg:text-7xl font-medium text-white tracking-tight leading-[1.1] max-w-3xl relative z-10">
-                Great ideas <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300 font-light italic pr-4">take root</span> in the dark.
+              <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold font-dot tracking-tight text-white leading-[1.15] max-w-3xl relative z-10">
+                Great ideas take root in the dark.
               </h3>
-              <p className="mt-8 text-lg md:text-xl text-zinc-400 font-normal max-w-xl mx-auto tracking-wide relative z-10 leading-relaxed">
-                Even immense forests begin as unseen seeds. We provide the nutrient-dense ecosystem where your nascent concepts can safely sprout and connect.
+              <p className="mt-8 text-sm md:text-base text-zinc-400 font-mono max-w-xl mx-auto tracking-wide relative z-10 leading-relaxed">
+                Even immense forests begin as unseen seeds. We provide the nutrient-dense, high-security ecosystem where your nascent concepts can safely sprout and connect.
               </p>
             </motion.section>
 
@@ -384,15 +390,14 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="min-h-[50vh] flex flex-col justify-center items-start text-left relative"
+              className="min-h-[40vh] flex flex-col justify-center items-start text-left relative"
             >
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[50vw] h-[50vw] min-w-[450px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.15)_0%,transparent_70%)] pointer-events-none animate-organic-blob animation-delay-2000"></div>
-              <h3 className="text-4xl md:text-6xl lg:text-7xl font-medium text-white tracking-tight leading-[1.1] max-w-2xl relative z-10">
+              <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold font-dot tracking-tight text-white leading-[1.15] max-w-2xl relative z-10">
                 Let collaboration <br/>
-                <span className="text-zinc-500 font-light italic">flow naturally.</span>
+                <span className="text-zinc-500">flow naturally.</span>
               </h3>
-              <p className="mt-8 text-lg md:text-xl text-zinc-400 font-normal max-w-xl tracking-wide relative z-10 leading-relaxed">
-                Innovation isn&apos;t manufactured; it grows organically when the right minds intersect. Find co-founders whose skills complement your own perfectly.
+              <p className="mt-8 text-sm md:text-base text-zinc-400 font-mono max-w-xl tracking-wide relative z-10 leading-relaxed">
+                Innovation isn't manufactured; it grows organically when the right minds intersect. Find co-founders whose skills complement your own perfectly.
               </p>
             </motion.section>
 
@@ -401,45 +406,37 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="min-h-[50vh] flex flex-col justify-center items-end text-right relative"
+              className="min-h-[40vh] flex flex-col justify-center items-end text-right relative"
             >
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[50vw] h-[50vw] min-w-[450px] bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.1)_0%,transparent_70%)] pointer-events-none animate-organic-blob animation-delay-3000"></div>
-              <h3 className="text-4xl md:text-6xl lg:text-7xl font-medium text-white tracking-tight leading-[1.1] max-w-2xl relative z-10">
+              <h3 className="text-3xl md:text-5xl lg:text-6xl font-bold font-dot tracking-tight text-white leading-[1.15] max-w-2xl relative z-10">
                 The ultimate <br/>
-                <span className="text-indigo-400 font-light italic">learning lab.</span>
+                <span className="text-zinc-400">learning lab.</span>
               </h3>
-              <p className="mt-8 text-lg md:text-xl text-zinc-400 font-normal max-w-xl ml-auto tracking-wide relative z-10 leading-relaxed">
-                Not just for founders. Students deconstruct industry-grade projects, contribute to real-world codebases, and build a resume that corporations notice immediately.
+              <p className="mt-8 text-sm md:text-base text-zinc-400 font-mono max-w-xl ml-auto tracking-wide relative z-10 leading-relaxed">
+                Not just for founders. Students deconstruct industry-grade projects, contribute to real-world codebases, and build a resume that recruiters notice immediately.
               </p>
             </motion.section>
 
             <motion.section 
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="min-h-[60vh] flex flex-col justify-center items-center text-center relative"
+              className="min-h-[50vh] flex flex-col justify-center items-center text-center relative"
             >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] min-w-[550px] bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15)_0%,transparent_70%)] pointer-events-none animate-organic-blob animation-delay-4000"></div>
-              
-              <div className="relative z-10 p-1">
-                {/* Flowing border ring */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-400/20 via-blue-400/20 to-purple-400/20 rounded-[40px] filter blur-xl animate-organic-blob"></div>
-                
-                <div className="bg-[#050507]/60 backdrop-blur-2xl border border-white/5 rounded-[40px] p-12 md:p-20 relative shadow-2xl overflow-hidden group hover:bg-[#050507]/80 transition-colors duration-700">
-                  <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
-                  
-                  <h3 className="text-3xl md:text-5xl font-medium text-white mb-6 tracking-tight">
-                    Your vision needs <span className="font-light italic pr-2">sunlight.</span>
+              <div className="relative z-10 p-1 w-full">
+                <div className="bg-card border border-border rounded-3xl p-12 md:p-20 relative shadow-2xl overflow-hidden group">
+                  <h3 className="text-2xl md:text-4xl font-bold font-sans tracking-tight text-white mb-6 uppercase">
+                    Your vision needs sunlight.
                   </h3>
-                  <p className="text-lg text-zinc-400/90 mb-10 max-w-xl mx-auto leading-relaxed font-normal">
+                  <p className="text-sm text-zinc-400 mb-10 max-w-xl mx-auto leading-relaxed font-mono">
                     Bring your ideas out of the shadows. Plant them in our community, gather real-time feedback, and watch your concepts blossom into reality.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                     <Button 
                       onClick={() => window.location.href = "/signup"}
-                      className="bg-zinc-100 text-black hover:bg-white rounded-full px-12 h-16 font-medium text-lg shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.03]"
+                      className="bg-white text-black hover:bg-black hover:text-white border border-white rounded-xl px-12 h-16 font-mono uppercase tracking-widest text-xs font-bold transition-all"
                     >
                       Plant an Idea
                     </Button>
@@ -455,223 +452,164 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0B0B0F] relative w-full overflow-hidden">
-      {/* ─── Living Animated Background ─── */}
+    <div className="flex-1 flex flex-col bg-background relative w-full overflow-hidden nothing-grid">
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[15%] left-[10%] w-[45vh] h-[45vh] bg-indigo-600/10 rounded-full mix-blend-screen blur-[80px] animate-blob animate-pulse-glow"></div>
-        <div className="absolute top-[10%] right-[15%] w-[40vh] h-[40vh] bg-blue-500/8 rounded-full mix-blend-screen blur-[70px] animate-blob-slow animation-delay-2000 animate-pulse-glow"></div>
-        <div className="absolute bottom-[15%] left-[25%] w-[50vh] h-[50vh] bg-purple-600/8 rounded-full mix-blend-screen blur-[90px] animate-blob-fast animation-delay-4000 animate-pulse-glow"></div>
-
-        {/* Aurora sweep band */}
-        <div className="absolute top-1/3 left-0 w-[200%] h-[30vh] bg-gradient-to-r from-transparent via-indigo-500/[0.03] to-transparent animate-aurora"></div>
-
-        {/* Floating micro-particles (Reduced Count for Performance) */}
-        <div className="absolute left-[15%] w-1 h-1 bg-indigo-400/30 rounded-full animate-float-particle" style={{ '--float-duration': '18s', '--float-delay': '0s' } as React.CSSProperties}></div>
-        <div className="absolute left-[35%] w-1.5 h-1.5 bg-purple-400/25 rounded-full animate-float-particle" style={{ '--float-duration': '22s', '--float-delay': '3s' } as React.CSSProperties}></div>
-        <div className="absolute left-[65%] w-1 h-1 bg-blue-400/25 rounded-full animate-float-particle" style={{ '--float-duration': '19s', '--float-delay': '7s' } as React.CSSProperties}></div>
-        <div className="absolute left-[85%] w-0.5 h-0.5 bg-indigo-300/30 rounded-full animate-float-particle" style={{ '--float-duration': '20s', '--float-delay': '11s' } as React.CSSProperties}></div>
-
-        {/* Living Ecosystem Tags (Environmental Density) */}
-        <div className="absolute inset-0 opacity-40 pointer-events-none overflow-hidden">
-          <div className="absolute top-[20%] left-[5%] text-[10px] font-black text-indigo-400/20 uppercase tracking-[0.4em] animate-float-slow transition-opacity hover:opacity-100">AI / ML</div>
-          <div className="absolute top-[45%] left-[2%] text-[10px] font-black text-purple-400/20 uppercase tracking-[0.4em] animate-float-medium group-hover:opacity-100">SAAS</div>
-          <div className="absolute top-[75%] left-[8%] text-[10px] font-black text-blue-400/20 uppercase tracking-[0.4em] animate-float-slow">FINTECH</div>
-          <div className="absolute top-[25%] right-[5%] text-[10px] font-black text-indigo-400/20 uppercase tracking-[0.4em] animate-float-medium">ACTIVE NOW</div>
-          <div className="absolute top-[55%] right-[2%] text-[10px] font-black text-purple-400/20 uppercase tracking-[0.4em] animate-float-slow">INNOVATING</div>
-          <div className="absolute top-[80%] right-[8%] text-[10px] font-black text-blue-400/20 uppercase tracking-[0.4em] animate-float-medium">HEALTHTECH</div>
-          
-          {/* Faint Grid lines (Environmental Density) */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]"></div>
-        </div>
-
-        {/* ─── Extreme Edge Environmental Elements (Minimal) ─── */}
-        <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden hidden md:block">
-          {/* Vertical Edge Left */}
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-40 group">
-            <div className="w-px h-32 bg-gradient-to-b from-transparent via-indigo-500/40 to-transparent"></div>
-            <span className="[writing-mode:vertical-rl] text-[9px] font-black tracking-[0.6em] text-white animate-pulse-glow uppercase">Innovation // Source</span>
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
-          </div>
-          
-          {/* Vertical Edge Right */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-6 opacity-40 group">
-            <div className="w-2 h-2 rounded-full bg-purple-500 animate-ping"></div>
-            <span className="[writing-mode:vertical-rl] rotate-180 text-[9px] font-black tracking-[0.6em] text-white animate-pulse-glow uppercase">Live Activity // Active</span>
-            <div className="w-px h-32 bg-gradient-to-b from-transparent via-purple-500/40 to-transparent"></div>
-          </div>
-        </div>
-
-        {/* ─── Global Structural Lines (Edge Definition) ─── */}
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute left-[calc(50%-700px)] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent hidden xl:block"></div>
-          <div className="absolute right-[calc(50%-700px)] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.03] to-transparent hidden xl:block"></div>
-          
-          {/* Mobile structural lines */}
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.02] to-transparent block xl:hidden"></div>
-          <div className="absolute right-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/[0.02] to-transparent block xl:hidden"></div>
-        </div>
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.015)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
       </div>
 
-      {/* Hero Feed Section with 3-Column Layout on Desktop */}
-      <div className="w-full relative flex-1 flex flex-col items-center justify-start z-10 pt-8 sm:pt-12 pb-16">
-        
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_420px_1fr] gap-8 w-full max-w-none 2xl:px-16 mx-auto px-4 lg:px-8">
-          
-          {/* Left Sidebar: Platform Pulse (Tablet & Desktop) */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="hidden md:flex flex-col space-y-8 pt-24"
-          >
-            {/* ─── Personalized Relevance: Innovator Pulse ─── */}
-            <div className="bg-indigo-500/[0.03] border border-indigo-500/10 rounded-[32px] p-6 lg:p-8 space-y-4 backdrop-blur-md">
-              <div className="flex items-center justify-between">
-                <h4 className="text-indigo-300 font-extrabold uppercase tracking-[0.2em] text-[10px]">Your Pulse</h4>
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
+      <div className="w-full relative flex-1 flex flex-col items-center z-10 pt-6 pb-10 px-4 md:px-8">
+
+        {/* Stats Row */}
+        <div className="w-full max-w-5xl mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center px-2.5 py-1 border border-border bg-card text-[9px] font-mono font-bold text-muted-foreground uppercase tracking-widest mb-2 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)] mr-2" />
+                Welcome back
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-2xl font-black text-white">{viewedIds.size}</span>
-                  <span className="text-zinc-500 text-[8px] font-bold uppercase tracking-wider">Ideas Explored</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-black text-white">{Math.min(100, viewedIds.size * 5 + 10)}%</span>
-                  <span className="text-zinc-500 text-[8px] font-bold uppercase tracking-wider">Innovation Score</span>
-                </div>
-              </div>
-              <div className="text-[10px] text-zinc-500 font-medium leading-tight pt-2 border-t border-white/[0.04]">
-                Your score reflects your discovery path and contribution potential within the ecosystem.
-              </div>
+              <h2 className="text-2xl font-bold font-dot tracking-tight text-foreground">Discover Ideas</h2>
+              <p className="text-muted-foreground text-xs mt-1">Swipe right to save · Swipe left to skip</p>
             </div>
-
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-[32px] p-6 lg:p-8 space-y-6 backdrop-blur-md sticky top-24">
-              <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] opacity-60">Platform Pulse</h4>
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <span className="text-2xl lg:text-3xl font-black text-white">100+</span>
-                  <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Active Ideas</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl lg:text-3xl font-black text-indigo-400">1.5k+</span>
-                  <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Innovators</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl lg:text-3xl font-black text-purple-400">10+</span>
-                  <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Global Sectors</span>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-white/[0.06]">
-                <p className="text-zinc-400 text-xs leading-relaxed hidden lg:block">
-                  Join a global classroom of real-world founders and tech contributors.
-                </p>
-                <p className="text-zinc-400 text-[10px] leading-relaxed lg:hidden">
-                  Real-world founders and tech contributors.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Center Column: The Main Feed */}
-          <div className="flex flex-col items-center">
-            <div className="w-full text-center space-y-2 mb-8 relative">
-              <div className="hidden md:block absolute -left-12 top-10 pointer-events-none">
-                <div className="flex items-center gap-2 bg-white/[0.02] border border-white/[0.05] rounded-full py-1 px-3">
-                  <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Live Flow</span>
-                </div>
-              </div>
-              <div className="hidden md:block absolute -right-12 top-4 pointer-events-none">
-                <div className="flex items-center gap-2 bg-white/[0.02] border border-white/[0.05] rounded-full py-1 px-3">
-                  <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></span>
-                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Global Seed</span>
-                </div>
-              </div>
-
-              <div className="inline-flex items-center px-3 py-1 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2" /> Welcome back
-              </div>
-              <h2 className="text-3xl font-light text-white tracking-tight capitalize">Welcome, {userMode || 'Member'}</h2>
-              <p className="text-zinc-500 text-sm font-medium flex items-center justify-center gap-4">
-                <span>Swipe right to like, left to skip</span>
-                {visitorCount !== null && (
-                  <span className="flex items-center text-indigo-400/80 bg-indigo-500/5 px-2 py-0.5 rounded-md border border-indigo-500/10 text-[10px] font-bold uppercase tracking-wider">
-                    <span className="w-1 h-1 rounded-full bg-indigo-400 mr-1.5 animate-pulse" />
-                    {visitorCount.toLocaleString()} Total Visitors
-                  </span>
-                )}
-              </p>
-            </div>
-
-            <div className="w-full max-w-[420px] relative flex items-center justify-center">
-              {ideas.length === 0 ? (
-                <div className="text-center space-y-6 bg-[#121218] border border-white/[0.04] rounded-[32px] p-10 shadow-xl w-full">
-                  <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-2 border border-white/[0.05]">
-                    <span className="text-4xl">🚀</span>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-white mb-2">You&apos;re all caught up</h2>
-                    <p className="text-zinc-400 text-sm">We&apos;re out of fresh ideas for now. Check back later or add your own!</p>
-                  </div>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 font-bold w-full transition-transform hover:scale-105"
-                  >
-                    Refresh Feed
-                  </Button>
-                </div>
-              ) : (
-                <div className="relative w-full h-[580px] sm:h-[640px] max-h-[75vh]">
-                  {[...ideas].reverse().map((idea, index) => {
-                    const realIndex = ideas.length - 1 - index;
-                    return (
-                    <SwipeCard
-                        key={idea.id}
-                        idea={idea}
-                        active={realIndex === 0}
-                        zIndex={ideas.length - realIndex}
-                        onSwipe={(dir) => handleSwipe(dir, idea)}
-                      />
-                    );
-                  })}
+            <div className="flex items-center gap-5">
+              {userCount !== null && (
+                <div className="text-right">
+                  <p className="text-2xl font-black font-dot tracking-tight text-foreground leading-none">{userCount.toLocaleString()}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Innovators</p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Right Sidebar: Corporate & Investor Lens (Tablet & Desktop) */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="hidden md:flex flex-col space-y-8 pt-24"
-          >
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-[32px] p-6 lg:p-8 space-y-6 backdrop-blur-md sticky top-24">
-              <h4 className="text-white font-black uppercase tracking-[0.2em] text-[10px] opacity-60">Ecosystem Lens</h4>
-              <div className="space-y-5">
-                <div className="space-y-2">
-                    <span className="text-[10px] font-black uppercase text-indigo-400 block tracking-widest">Investor Insights</span>
-                    <p className="text-white text-[11px] font-bold leading-relaxed">
-                        Collectors track emerging seeds and sector momentum to discover high-potential innovators.
-                    </p>
-                </div>
-                <div className="space-y-2 border-t border-white/[0.04] pt-4">
-                  <span className="text-[10px] font-black uppercase text-purple-400 block tracking-widest">Hackathon Path</span>
-                  <p className="text-zinc-400 text-[10px] leading-relaxed">
-                      Ideathon seekers and hackers use the feed to validate problem statements and find original startup hooks.
-                  </p>
-                </div>
-                <div className="pt-2 border-t border-white/[0.04] flex flex-wrap gap-2">
-                  <span className="px-2 py-1 rounded-full bg-white/[0.05] text-[7px] font-bold text-zinc-500 uppercase tracking-widest border border-white/[0.05]">#IDEATHON</span>
-                  <span className="px-2 py-1 rounded-full bg-white/[0.05] text-[7px] font-bold text-zinc-500 uppercase tracking-widest border border-white/[0.05]">#HACKATHON</span>
-                </div>
+              {visitorCount !== null && (
+                <>
+                  <div className="w-px h-10 bg-border" />
+                  <div className="text-right">
+                    <p className="text-2xl font-black font-dot tracking-tight text-foreground leading-none">{visitorCount.toLocaleString()}</p>
+                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Visitors</p>
+                  </div>
+                </>
+              )}
+              <div className="w-px h-10 bg-border" />
+              <div className="text-right">
+                <p className="text-2xl font-black font-dot tracking-tight text-foreground leading-none">{viewedIds.size}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Explored</p>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </div>
 
+        {/* 2-Column: Swipe Card | Author Panel */}
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_290px] gap-6 items-start">
+
+          {/* LEFT: Swipe Card */}
+          <div className="flex justify-center lg:justify-start">
+            {ideas.length === 0 ? (
+              <div className="text-center space-y-5 bg-card border border-border rounded-2xl p-10 shadow-xl w-full max-w-[420px]">
+                <div>
+                  <h2 className="text-xl font-bold font-dot tracking-tight text-foreground mb-2">You&apos;re all caught up</h2>
+                  <p className="text-muted-foreground text-sm">No fresh ideas right now. Check back later or post your own!</p>
+                </div>
+                <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-11 font-semibold w-full">
+                  Refresh Feed
+                </Button>
+              </div>
+            ) : (
+              <div className="relative w-full max-w-[420px] h-[580px] sm:h-[640px] max-h-[75vh]">
+                {[...ideas].reverse().map((idea, index) => {
+                  const realIndex = ideas.length - 1 - index;
+                  return (
+                    <SwipeCard
+                      key={idea.id}
+                      idea={idea}
+                      active={realIndex === 0}
+                      zIndex={ideas.length - realIndex}
+                      onSwipe={(dir) => handleSwipe(dir, idea)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT: Author Profile Panel */}
+          {ideas.length > 0 && (() => {
+            const cur = ideas[0];
+            const modeColors: Record<string, string> = {
+              explorer: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+              sparker:  "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+              builder:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
+              catalyst: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+            };
+            const modeColor = modeColors[cur.authorMode || "explorer"] || modeColors.explorer;
+            return (
+              <motion.div
+                key={cur.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="hidden lg:flex flex-col gap-4 sticky top-20"
+              >
+                {/* Author Card */}
+                <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+                  <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Idea Author</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                      <span className="text-blue-400 font-black font-dot text-base">
+                        {(cur.authorName || cur.authorUsername || "?")[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-foreground font-bold font-dot tracking-tight truncate">{cur.authorName || cur.authorUsername || "Unknown"}</p>
+                      <p className="text-muted-foreground text-xs">@{cur.authorUsername}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border capitalize ${modeColor}`}>{cur.authorMode || "Explorer"}</span>
+                    {cur.authorCountry && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg border border-border bg-background text-muted-foreground">{cur.authorCountry}</span>
+                    )}
+                  </div>
+                  {cur.authorBio && (
+                    <p className="text-xs text-muted-foreground leading-relaxed border-t border-border pt-3">{cur.authorBio}</p>
+                  )}
+                  <div className="flex items-center gap-4 border-t border-border pt-3">
+                    <div>
+                      <p className="text-base font-black font-dot text-foreground">{cur.authorTotalLikes ?? 0}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
+                    </div>
+                    <div className="w-px h-7 bg-border" />
+                    <div>
+                      <p className="text-base font-black font-dot text-foreground">{cur.authorTrustScore ?? 100}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Trust</p>
+                    </div>
+                  </div>
+                  <a href={`/user/${cur.authorUsername}`} className="flex items-center justify-center w-full h-9 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:border-blue-500/50 hover:text-blue-400 transition-colors">
+                    View Profile
+                  </a>
+                </div>
+
+                {/* Idea Stats */}
+                <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+                  <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">This Idea</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-base font-black font-dot text-foreground">{cur.likesCount ?? 0}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
+                    </div>
+                    <div>
+                      <p className="text-base font-black font-dot text-foreground">{cur.views ?? 0}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Views</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold font-dot text-foreground capitalize leading-snug">{cur.category}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Category</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
       </div>
-
     </div>
   );
 }
+
+

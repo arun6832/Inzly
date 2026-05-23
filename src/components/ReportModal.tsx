@@ -45,7 +45,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit, ideaTitle }: Re
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="w-full max-w-lg bg-[#0a0a0c] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl"
+                        className="w-full max-w-lg bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
                     >
                         <div className="p-8 sm:p-10 space-y-8 relative">
                             <button 
@@ -56,7 +56,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit, ideaTitle }: Re
                             </button>
 
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
                                     <Flag className="w-6 h-6 text-red-400" />
                                 </div>
                                 <div>
@@ -100,14 +100,14 @@ export default function ReportModal({ isOpen, onClose, onSubmit, ideaTitle }: Re
                                 <Button
                                     variant="ghost"
                                     onClick={onClose}
-                                    className="flex-1 rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] text-zinc-500"
+                                    className="flex-1 rounded-xl h-14 font-black uppercase tracking-widest text-[10px] text-zinc-500"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     disabled={!reason || submitting}
                                     onClick={handleReport}
-                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-red-500/10 transition-all hover:scale-[1.02]"
+                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-xl h-14 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-red-500/10 transition-all hover:scale-[1.02]"
                                 >
                                     {submitting ? 'Transmitting...' : 'Submit Report'}
                                 </Button>

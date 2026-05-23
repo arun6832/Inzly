@@ -40,11 +40,11 @@ export default function Footer({ variant = "minimal" }: FooterProps) {
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
                     {/* Primary Links */}
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-10 gap-y-3">
-                        <Link href="/about" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">Why Inzly</Link>
-                        <Link href="/careers" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">Work With Us</Link>
-                        <Link href="/news" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">News</Link>
-                        <Link href="/leaderboard" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">Leaderboard</Link>
-                        <Link href="/privacy" className="text-[10px] font-bold text-zinc-500 hover:text-indigo-400 uppercase tracking-[0.2em] transition-colors">Privacy</Link>
+                        <Link href="/about" className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">Why Inzly</Link>
+                        <Link href="/careers" className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">Work With Us</Link>
+                        <Link href="/news" className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">News</Link>
+                        <Link href="/leaderboard" className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">Leaderboard</Link>
+                        <Link href="/privacy" className="text-[10px] font-bold text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors">Privacy</Link>
                     </div>
 
                     {/* Social Logos */}

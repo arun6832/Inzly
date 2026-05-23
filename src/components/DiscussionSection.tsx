@@ -159,7 +159,7 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                 {/* QUESTIONS TAB */}
                 <TabsContent value="questions" className="space-y-8 animate-in fade-in-50 duration-500">
                     {user ? (
-                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-[24px] border border-white/[0.04] shadow-xl space-y-5">
+                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-2xl border border-white/[0.04] shadow-xl space-y-5">
                             <h3 className="text-lg font-medium text-white">Challenge the Execution</h3>
                             <p className="text-xs text-zinc-500">Provide critical friction points regarding the model.</p>
 
@@ -192,7 +192,7 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center p-8 bg-[#121218] rounded-[32px] border border-white/[0.04]">
+                        <div className="text-center p-8 bg-[#121218] rounded-2xl border border-white/[0.04]">
                             <p className="text-zinc-400">Log in to ask questions.</p>
                         </div>
                     )}
@@ -219,7 +219,7 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                 {/* COMMENTS TAB */}
                 <TabsContent value="comments" className="space-y-8 animate-in fade-in-50 duration-500">
                     {user ? (
-                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-[24px] border border-white/[0.04] shadow-xl space-y-5">
+                        <div className="bg-[#0a0a0c] p-6 sm:p-8 rounded-2xl border border-white/[0.04] shadow-xl space-y-5">
                             <h3 className="text-lg font-medium text-white">Provide Input</h3>
 
                             <div className="space-y-4">
@@ -238,7 +238,7 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center p-8 bg-[#121218] rounded-[32px] border border-white/[0.04]">
+                        <div className="text-center p-8 bg-[#121218] rounded-2xl border border-white/[0.04]">
                             <p className="text-zinc-400">Log in to leave comments.</p>
                         </div>
                     )}
@@ -252,7 +252,7 @@ export default function DiscussionSection({ ideaId }: { ideaId: string }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: Math.min(i * 0.1, 0.5) }}
                             >
-                                <div className="p-6 sm:p-8 bg-[#0a0a0c] border border-white/[0.04] shadow-xl rounded-[24px] hover:border-white/10 transition-colors">
+                                <div className="p-6 sm:p-8 bg-[#0a0a0c] border border-white/[0.04] shadow-xl rounded-2xl hover:border-white/10 transition-colors">
                                     <div className="flex items-center space-x-3 mb-4">
                                         <div className="w-8 h-8 rounded-full shadow-inner" style={{ background: generateAvatarGradient(c.userId) }} />
                                         <div className="flex flex-col">

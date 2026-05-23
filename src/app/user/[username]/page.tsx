@@ -217,7 +217,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Left Column: Profile Card */}
                     <div className="lg:col-span-1 space-y-6">
-                        <div className="p-8 rounded-[32px] bg-[#121218] border border-white/[0.04] shadow-2xl relative overflow-hidden">
+                        <div className="p-8 rounded-2xl bg-[#121218] border border-white/[0.04] shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-indigo-500/10 to-transparent" />
 
                             {isOwnProfile && (
@@ -232,7 +232,7 @@ export default function ProfilePage() {
 
                             <div className="relative z-10 text-center space-y-6 mt-4">
                                 {/* Initials Avatar */}
-                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-white/10 flex items-center justify-center mx-auto shadow-xl">
+                                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-white/10 flex items-center justify-center mx-auto shadow-xl">
                                     <span className="text-3xl font-black text-white">{initials}</span>
                                 </div>
 
@@ -301,7 +301,7 @@ export default function ProfilePage() {
                                     {!isOwnProfile && (
                                         <Button
                                             onClick={handleMessage}
-                                            className="w-full bg-white text-black hover:bg-zinc-200 rounded-2xl h-12 font-bold flex items-center justify-center gap-2"
+                                            className="w-full bg-white text-black hover:bg-zinc-200 rounded-xl h-12 font-bold flex items-center justify-center gap-2"
                                         >
                                             <MessageSquare className="w-4 h-4" />
                                             Message Builder
@@ -326,8 +326,8 @@ export default function ProfilePage() {
 
                         <div className="grid grid-cols-1 gap-4">
                             {ideas.length === 0 ? (
-                                <div className="py-20 text-center bg-[#121218] border border-white/[0.04] rounded-[32px] space-y-4">
-                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                                <div className="py-20 text-center bg-[#121218] border border-white/[0.04] rounded-2xl space-y-4">
+                                    <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto">
                                         <Lightbulb className="w-6 h-6 text-zinc-700" />
                                     </div>
                                     <p className="text-zinc-500 font-medium">No ideas posted to the community yet.</p>
@@ -343,7 +343,7 @@ export default function ProfilePage() {
                                         <div className="flex gap-4 items-stretch group">
                                             <Link
                                                 href={`/idea/${idea.id}`}
-                                                className="flex-1 block p-6 bg-[#121218] border border-white/[0.04] hover:border-white/10 rounded-[28px] transition-all hover:bg-white/[0.02] relative"
+                                                className="flex-1 block p-6 bg-[#121218] border border-white/[0.04] hover:border-white/10 rounded-2xl transition-all hover:bg-white/[0.02] relative"
                                             >
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                     <div className="space-y-2 flex-1 pr-6">
@@ -374,7 +374,7 @@ export default function ProfilePage() {
                                                     }}
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="w-16 rounded-[28px] bg-[#121218] border border-white/[0.04] hover:border-white/10 text-zinc-600 hover:text-white transition-all self-stretch"
+                                                    className="w-16 rounded-2xl bg-[#121218] border border-white/[0.04] hover:border-white/10 text-zinc-600 hover:text-white transition-all self-stretch"
                                                     title="Message Architect"
                                                 >
                                                     <MessageSquare className="w-5 h-5" />
@@ -402,7 +402,7 @@ export default function ProfilePage() {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-[#121218] border border-white/10 rounded-3xl p-8 max-w-sm w-full relative shadow-2xl"
+                            className="bg-[#121218] border border-white/10 rounded-2xl p-8 max-w-sm w-full relative shadow-2xl"
                         >
                             <button
                                 onClick={() => setEditOpen(false)}

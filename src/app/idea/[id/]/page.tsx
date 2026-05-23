@@ -265,29 +265,19 @@ export default function IdeaDetailPage() {
         }
     };
 
-    const getStatusColor = (status?: ExecutionStatus) => {
-        switch(status) {
-            case 'Thinking': return 'text-zinc-500 bg-white/5 border-white/5';
-            case 'Refining': return 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
-            case 'Building': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
-            case 'Launched': return 'text-green-400 bg-green-500/10 border-green-500/20';
-            default: return 'text-zinc-500 bg-white/5';
-        }
-    };
-
     if (loading) {
         return (
-            <div className="flex-1 flex justify-center items-center bg-[#0B0B0F]">
-                <div className="w-10 h-10 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+            <div className="flex-1 flex justify-center items-center bg-black min-h-screen nothing-grid">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.4em] animate-pulse">Loading Asset Details...</span>
             </div>
         );
     }
 
     if (error || !ideaData) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-4 bg-[#050507]">
-                <h2 className="text-2xl font-light text-white italic">{error || "Asset not trackable"}</h2>
-                <Button onClick={() => router.push("/")} className="bg-white text-black rounded-xl px-8 h-12 font-bold uppercase tracking-widest text-[10px]">
+            <div className="flex-1 flex flex-col items-center justify-center space-y-4 bg-black min-h-screen nothing-grid">
+                <h2 className="text-xl font-bold font-dot uppercase tracking-widest text-white italic">{error || "Asset not trackable"}</h2>
+                <Button onClick={() => router.push("/")} className="bg-white text-black hover:bg-black hover:text-white border border-white rounded-none px-8 h-12 font-mono uppercase tracking-widest text-[10px] font-bold">
                     Return to Feed
                 </Button>
             </div>
@@ -297,29 +287,29 @@ export default function IdeaDetailPage() {
     const isOwner = user?.uid === ideaData.userId;
 
     return (
-        <div className="flex-1 min-h-screen bg-[#050507]">
-            <div className="max-w-5xl mx-auto px-4 py-12 space-y-12">
+        <div className="flex-1 min-h-screen bg-black nothing-grid">
+            <div className="max-w-5xl mx-auto px-4 py-12 space-y-12 relative z-10">
                 
                 {/* ─── Superior Navigation ─── */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between font-mono">
                     <Button
                         variant="ghost"
                         onClick={() => router.back()}
-                        className="text-zinc-500 hover:text-white rounded-xl hover:bg-white/5 -ml-4 font-black uppercase tracking-[0.2em] text-[10px]"
+                        className="text-zinc-500 hover:text-white rounded-none hover:bg-white/5 -ml-4 font-bold uppercase tracking-[0.2em] text-[10px] border border-transparent hover:border-white/10 px-3 py-1 h-9"
                     >
-                        <ChevronLeft className="w-4 h-4 mr-2" />
+                        <ChevronLeft className="w-3.5 h-3.5 mr-2" />
                         Back to Stream
                     </Button>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={handleSave}
                             disabled={hasSaved}
-                            className={`w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.05] transition-all ${hasSaved ? 'text-indigo-400 border-indigo-500/30 bg-indigo-500/5' : 'text-zinc-500 hover:text-white hover:bg-white/10'}`}
+                            className={`w-10 h-10 rounded-none bg-black border border-white/10 transition-colors ${hasSaved ? 'text-white border-white bg-white/10' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}
                         >
-                            <BookmarkPlus className={`w-5 h-5 ${hasSaved ? 'fill-indigo-400' : ''}`} />
+                            <BookmarkPlus className={`w-4 h-4 ${hasSaved ? 'fill-current' : ''}`} />
                         </Button>
                         <Button 
                             variant="ghost" 
@@ -328,9 +318,9 @@ export default function IdeaDetailPage() {
                                 navigator.clipboard.writeText(window.location.href);
                                 alert("Refinement link captured.");
                             }}
-                            className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.05] text-zinc-500 hover:text-white transition-all hover:bg-white/10"
+                            className="w-10 h-10 rounded-none bg-black border border-white/10 text-zinc-500 hover:text-white transition-colors hover:bg-white/5"
                         >
-                            <Share2 className="w-5 h-5" />
+                            <Share2 className="w-4 h-4" />
                         </Button>
                         <Button 
                             variant="ghost" 
@@ -341,71 +331,67 @@ export default function IdeaDetailPage() {
                                 const chatId = await getOrCreateChat(user.uid, ideaData.userId);
                                 router.push(`/messages/${chatId}`);
                             }}
-                            className="w-12 h-12 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
+                            className="w-10 h-10 rounded-none bg-black border border-white/10 text-zinc-400 hover:text-white transition-colors hover:bg-white/5"
                         >
-                            <MessageSquare className="w-5 h-5" />
+                            <MessageSquare className="w-4 h-4" />
                         </Button>
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => setShowReport(true)}
-                            className="w-12 h-12 rounded-xl bg-red-500/5 border border-red-500/10 text-red-400/50 hover:text-red-400 transition-all hover:bg-red-500/10"
+                            className="w-10 h-10 rounded-none bg-black border border-red-950/30 text-red-500/50 hover:text-red-400 transition-colors hover:bg-red-500/5"
                         >
-                            <Flag className="w-5 h-5" />
+                            <Flag className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
 
                 {/* ─── Refinement Hub Header ─── */}
-                <div className="space-y-8">
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-[0.2em]">
+                <div className="space-y-8 font-mono">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="inline-flex items-center px-3 py-1 rounded-none text-[9px] font-bold bg-white/5 text-zinc-400 border border-white/10 uppercase tracking-wider">
                             {ideaData.category}
                         </div>
-                        <div className={`inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black border uppercase tracking-[0.2em] transition-all shadow-lg shadow-black/20 ${getStatusColor(ideaData.executionStatus)}`}>
-                            <span className="w-2 h-2 rounded-full bg-current mr-2 animate-pulse" />
+                        <div className="inline-flex items-center px-3 py-1 rounded-none text-[9px] font-bold border border-white/10 bg-black text-zinc-400 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.7)] mr-2" />
                             {ideaData.executionStatus || 'Analyzing'}
                         </div>
-                        <div className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-white/[0.02] text-zinc-500 border border-white/[0.05] uppercase tracking-[0.2em]">
-                            Version v{ideaData.currentVersion || 1}
+                        <div className="inline-flex items-center px-3 py-1 rounded-none text-[9px] font-bold bg-black text-zinc-500 border border-white/10 uppercase tracking-wider">
+                            v{ideaData.currentVersion || 1} STABLE
                         </div>
                         
                         {/* Visibility Badge */}
-                        <div className={`inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black border uppercase tracking-[0.2em] shadow-lg shadow-black/20 ${
-                            ideaData.visibility === 'public' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
-                            ideaData.visibility === 'restricted' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
-                            'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
-                        }`}>
-                            {ideaData.visibility === 'public' ? <Eye className="w-3 h-3 mr-2" /> : <Lock className="w-3 h-3 mr-2" />}
-                            {ideaData.visibility === 'public' ? 'Public Domain' : ideaData.visibility === 'restricted' ? 'Restricted Access' : 'Investor Verified'}
+                        <div className="inline-flex items-center px-3 py-1 rounded-none text-[9px] font-bold border border-white/10 bg-black text-zinc-400 uppercase tracking-wider">
+                            {ideaData.visibility === 'public' ? <Eye className="w-3 h-3 mr-1.5" /> : <Lock className="w-3 h-3 mr-1.5" />}
+                            <span>{ideaData.visibility === 'public' ? 'Public Domain' : ideaData.visibility === 'restricted' ? 'Restricted Access' : 'Investor Verified'}</span>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h1 className="text-5xl md:text-7xl font-light text-white tracking-tight leading-[1.05]">
+                        <h1 className="text-3xl sm:text-5xl font-bold font-dot uppercase tracking-wider text-white leading-tight">
                             {ideaData.title}
                         </h1>
                         <div className="flex items-center gap-6">
                             <button 
                                 onClick={() => router.push(`/user/${ideaData.authorUsername}`)}
-                                className="group flex items-center gap-3"
+                                className="group flex items-center gap-3 font-mono text-left"
                             >
-                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-indigo-500/50 transition-all shadow-xl">
-                                    <span className="text-zinc-500 group-hover:text-indigo-400 uppercase text-[10px] font-black">
+                                <div className="w-9 h-9 rounded-none bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-white transition-colors">
+                                    <span className="text-zinc-500 group-hover:text-white uppercase text-[10px] font-bold">
                                         {ideaData.authorUsername?.[0].toUpperCase() || 'U'}
                                     </span>
                                 </div>
-                                <div className="text-left">
-                                    <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Architect</p>
-                                    <p className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">@{ideaData.authorUsername}</p>
+                                <div>
+                                    <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest leading-none mb-1">Architect</p>
+                                    <p className="text-xs font-bold text-white group-hover:text-zinc-300 transition-colors">@{ideaData.authorUsername}</p>
                                 </div>
                             </button>
                             
-                            <div className="h-8 w-px bg-white/10 mx-2" />
+                            <div className="h-8 w-px bg-white/10" />
                             
-                            <div>
-                                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Engagement</p>
-                                <p className="text-sm font-bold text-white capitalize">{ideaData.views?.toLocaleString() || 0} Pulses</p>
+                            <div className="font-mono">
+                                <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest leading-none mb-1">Engagement</p>
+                                <p className="text-xs font-bold text-white uppercase">{ideaData.views?.toLocaleString() || 0} Pulses</p>
                             </div>
                         </div>
                     </div>
@@ -413,56 +399,53 @@ export default function IdeaDetailPage() {
 
                 {/* ─── The Hybrid Layer: Problems & Standalone ─── */}
                 {linkedProblem && (
-                    <div className="group relative">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-2xl blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
-                        <div className="relative p-8 rounded-xl bg-purple-500/[0.03] border border-purple-500/10 backdrop-blur-3xl space-y-4">
-                            <header className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
-                                        <span className="text-purple-400 text-xs text-center font-black leading-none uppercase">!</span>
-                                    </div>
-                                    <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.3em]">Parent Problem Statement</p>
-                                </div>
-                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Problem #ID-{linkedProblem.id.slice(0, 6)}</span>
-                            </header>
-                            <h3 className="text-xl font-bold text-white tracking-tight leading-relaxed">{linkedProblem.title}</h3>
-                            <p className="text-sm text-zinc-400 leading-relaxed font-medium">{linkedProblem.description}</p>
-                        </div>
+                    <div className="group relative rounded-none border border-white/10 bg-black p-6 sm:p-8 space-y-4">
+                        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
+                        <header className="flex items-center justify-between font-mono relative z-10">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)] mr-1" />
+                                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Parent Problem Statement</p>
+                            </div>
+                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-wider">Problem #ID-{linkedProblem.id.slice(0, 6)}</span>
+                        </header>
+                        <h3 className="text-lg font-bold font-dot uppercase tracking-wider text-white relative z-10">{linkedProblem.title}</h3>
+                        <p className="text-sm text-zinc-400 leading-relaxed font-sans relative z-10">{linkedProblem.description}</p>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12 pt-8">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-12 pt-4">
                     
                     {/* ─── Main Refinement Track ─── */}
                     <div className="space-y-16">
                         
                         {/* Current Execution State */}
-                        <section className="space-y-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Current Snapshot</h3>
-                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">v{ideaData.currentVersion || 1} ACTIVE</span>
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between font-mono">
+                                <h3 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.4em]">Current Snapshot</h3>
+                                <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">v{ideaData.currentVersion || 1} ACTIVE</span>
                             </div>
-                            <div className="p-8 sm:p-12 rounded-2xl bg-[#0a0a0c] border border-white/[0.04] shadow-2xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
+                            <div className="p-8 rounded-none bg-black border border-white/10 shadow-2xl relative overflow-hidden group">
+                                <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_1px]"></div>
                                 
                                 {!accessGranted ? (
-                                    <div className="relative z-10 flex flex-col items-center justify-center py-20 text-center space-y-6">
-                                        <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                                            <Lock className="w-8 h-8 text-orange-400" />
+                                    <div className="relative z-10 flex flex-col items-center justify-center py-16 text-center space-y-6 font-mono">
+                                        <div className="w-12 h-12 rounded-none bg-white/5 border border-white/10 flex items-center justify-center">
+                                            <Lock className="w-5 h-5 text-zinc-400" />
                                         </div>
                                         <div className="space-y-2">
-                                            <h4 className="text-xl font-bold text-white">Restricted Concept</h4>
-                                            <p className="text-sm text-zinc-500 max-w-sm">The architect has restricted access to this concept. You must request permission to view the execution plan.</p>
+                                            <h4 className="text-sm font-bold uppercase tracking-widest text-white">Restricted Concept</h4>
+                                            <p className="text-[10px] uppercase tracking-wide text-zinc-500 max-w-xs leading-normal">The architect has restricted access to this concept. You must request permission to view the execution plan.</p>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+                                        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
                                             <Button 
                                                 onClick={handleRequestAccess}
                                                 disabled={accessRequestStatus !== 'none' || requestingAccess}
-                                                className="flex-1 bg-white text-black hover:bg-zinc-200 rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]"
+                                                className="flex-1 bg-white text-black hover:bg-black hover:text-white border border-white rounded-none h-11 font-mono uppercase tracking-widest text-[9px] font-bold transition-all"
                                             >
                                                 {requestingAccess ? 'transmitting...' : 
-                                                 accessRequestStatus === 'pending' ? 'Request Pending' : 
-                                                 accessRequestStatus === 'rejected' ? 'Access Denied' : 
+                                                 accessRequestStatus === 'pending' ? 'Pending' : 
+                                                 accessRequestStatus === 'rejected' ? 'Denied' : 
                                                  'Request Access'}
                                             </Button>
                                             <Button 
@@ -473,7 +456,7 @@ export default function IdeaDetailPage() {
                                                     const chatId = await getOrCreateChat(user.uid, ideaData.userId);
                                                     router.push(`/messages/${chatId}`);
                                                 }}
-                                                className="flex-1 bg-white/5 border-white/10 text-white rounded-xl h-12 font-bold uppercase tracking-widest text-[10px] hover:bg-white/10"
+                                                className="flex-1 bg-black border border-white/10 text-white rounded-none h-11 font-mono uppercase tracking-widest text-[9px] font-bold hover:bg-white/5 transition-all"
                                             >
                                                 <MessageSquare className="w-3.5 h-3.5 mr-2" />
                                                 Message
@@ -481,7 +464,7 @@ export default function IdeaDetailPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-lg sm:text-2xl text-zinc-300 leading-relaxed sm:leading-[1.8] whitespace-pre-wrap relative z-10 font-normal tracking-tight">
+                                    <p className="text-base text-zinc-300 leading-relaxed whitespace-pre-wrap relative z-10 font-sans font-normal">
                                         {ideaData.idea}
                                     </p>
                                 )}
@@ -489,33 +472,33 @@ export default function IdeaDetailPage() {
                         </section>
 
                         {/* Evolution Timeline */}
-                        <section className="space-y-10">
-                            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em] mb-8">Evolution Timeline</h3>
-                            <div className="relative pl-12 space-y-12">
-                                {/* Vertical Line */}
-                                <div className="absolute left-[23px] top-4 bottom-4 w-px bg-gradient-to-b from-indigo-500/50 via-white/10 to-transparent"></div>
+                        <section className="space-y-8">
+                            <h3 className="text-[9px] font-bold font-mono text-zinc-500 uppercase tracking-[0.4em] mb-4">Evolution Timeline</h3>
+                            <div className="relative pl-8 space-y-8 font-mono">
+                                {/* Thin hairline vertical tree rule */}
+                                <div className="absolute left-[13px] top-3 bottom-3 w-px bg-white/10"></div>
                                 
-                                {versions.map((v, idx) => (
+                                {versions.map((v) => (
                                     <div key={v.id} className="relative group">
-                                        {/* Timeline Node */}
-                                        <div className="absolute -left-[45px] top-1.5 w-12 h-12 flex items-center justify-center">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-800 border-[3px] border-zinc-600 group-hover:border-indigo-500 transition-colors z-10"></div>
+                                        {/* Monospace square tree node */}
+                                        <div className="absolute -left-[31px] top-1.5 w-6 h-6 flex items-center justify-center">
+                                            <div className="w-1.5 h-1.5 bg-black border border-white/30 group-hover:border-white transition-colors z-10"></div>
                                         </div>
                                         
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-xs font-black text-white uppercase tracking-widest">Version v{v.versionNumber}</span>
-                                                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">v{v.versionNumber} snapshot</span>
+                                                <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-wider">
                                                     {v.timestamp?.toDate ? v.timestamp.toDate().toLocaleDateString() : 'Snapshot'}
                                                 </span>
                                             </div>
-                                            <div className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.05] group-hover:border-white/10 transition-all">
-                                                <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2">Changelog</h4>
-                                                <p className="text-sm text-zinc-400 font-medium leading-relaxed italic">&ldquo;{v.changelog}&rdquo;</p>
+                                            <div className="p-4 rounded-none bg-black border border-white/5 group-hover:border-white/10 transition-colors">
+                                                <h4 className="text-zinc-600 text-[8px] font-bold uppercase tracking-widest mb-1">Changelog</h4>
+                                                <p className="text-xs text-zinc-400 font-medium leading-relaxed italic">&ldquo;{v.changelog}&rdquo;</p>
                                                 
-                                                <div className="mt-6 pt-4 border-t border-white/[0.03]">
-                                                    <h4 className="text-white text-sm font-bold mb-2">Title: {v.titleSnapshot}</h4>
-                                                    <p className="text-xs text-zinc-500 line-clamp-3 leading-relaxed">{v.descriptionSnapshot}</p>
+                                                <div className="mt-4 pt-3 border-t border-white/5 font-sans">
+                                                    <h4 className="text-white text-xs font-bold mb-1">Title: {v.titleSnapshot}</h4>
+                                                    <p className="text-[11px] text-zinc-500 line-clamp-3 leading-relaxed">{v.descriptionSnapshot}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -523,11 +506,11 @@ export default function IdeaDetailPage() {
                                 ))}
                                 
                                 <div className="relative group grayscale">
-                                    <div className="absolute -left-[45px] top-1.5 w-12 h-12 flex items-center justify-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
+                                    <div className="absolute -left-[31px] top-1.5 w-6 h-6 flex items-center justify-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-red-pulse shadow-[0_0_4px_rgba(239,68,68,0.8)]" />
                                     </div>
-                                    <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-center">
-                                        <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em]">Future Evolution Pending...</span>
+                                    <div className="p-3 bg-black border border-white/5 rounded-none flex items-center justify-center">
+                                        <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Future Evolution Pending...</span>
                                     </div>
                                 </div>
                             </div>
@@ -535,26 +518,26 @@ export default function IdeaDetailPage() {
                     </div>
 
                     {/* ─── Control & Context Pane ─── */}
-                    <div className="space-y-8 sticky top-24 h-fit pb-12">
+                    <div className="space-y-8 sticky top-20 h-fit pb-12 font-mono">
                         
                         {/* Interaction Hub */}
-                        <div className="p-8 rounded-2xl bg-[#0a0a0c] border border-white/[0.04] shadow-2xl space-y-8">
+                        <div className="p-6 rounded-none bg-black border border-white/10 shadow-2xl space-y-6">
                             
                             {/* Execution Panel */}
                             {isOwner ? (
-                                <div className="space-y-8">
-                                    <div className="space-y-4">
-                                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-40">Architect Controls</h3>
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <h3 className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Architect Controls</h3>
                                         <Button 
-                                            className="w-full h-14 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] transition-transform"
+                                            className="w-full h-12 bg-white text-black hover:bg-black hover:text-white border border-white rounded-none font-bold uppercase tracking-widest text-[10px] transition-colors"
                                             onClick={() => setShowRefine(true)}
                                         >
-                                            <Sparkles className="w-4 h-4 mr-2" />
+                                            <Sparkles className="w-3.5 h-3.5 mr-2" />
                                             Propose v{ (ideaData.currentVersion || 1) + 1 } (Refine)
                                         </Button>
                                         <Button 
                                             variant="outline"
-                                            className="w-full h-12 bg-white/[0.03] border-white/10 text-zinc-400 rounded-xl font-bold text-xs hover:text-white"
+                                            className="w-full h-10 bg-transparent border border-white/10 text-zinc-500 rounded-none font-bold text-[9px] uppercase tracking-widest hover:text-white hover:bg-white/5 transition-all"
                                             onClick={() => alert("Execution status updating is locked in this phase.")}
                                         >
                                             Shift Status to Building
@@ -562,7 +545,7 @@ export default function IdeaDetailPage() {
                                     </div>
 
                                     {/* Team Management Section */}
-                                    <div className="pt-8 border-t border-white/[0.04]">
+                                    <div className="pt-6 border-t border-white/5">
                                         <TeamManagement 
                                             ideaId={ideaId} 
                                             ideaTitle={ideaData.title} 
@@ -571,20 +554,20 @@ export default function IdeaDetailPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-40">Collaboration Layer</h3>
+                                <div className="space-y-3">
+                                    <h3 className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Collaboration Layer</h3>
                                     <Button 
                                         onClick={handleJoinRequest}
                                         disabled={joinStatus !== 'none' || isJoining}
-                                        className={`w-full h-14 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-transform hover:scale-[1.02] ${
-                                            joinStatus === 'approved' ? 'bg-green-500 text-white' : 
-                                            joinStatus === 'pending' ? 'bg-zinc-800 text-zinc-500' : 
-                                            'bg-white text-black hover:bg-zinc-200'
+                                        className={`w-full h-12 rounded-none font-bold uppercase tracking-widest text-[10px] transition-all ${
+                                            joinStatus === 'approved' ? 'bg-zinc-800 text-zinc-400 border border-white/10' : 
+                                            joinStatus === 'pending' ? 'bg-zinc-950 text-zinc-600 border border-white/5' : 
+                                            'bg-white text-black hover:bg-black hover:text-white border border-white'
                                         }`}
                                     >
                                         {isJoining ? 'transmitting...' : 
                                          joinStatus === 'approved' ? 'Active Member' : 
-                                         joinStatus === 'pending' ? 'Request Transmitted' : 
+                                         joinStatus === 'pending' ? 'Request Sent' : 
                                          'Request to join team'}
                                     </Button>
                                     
@@ -596,15 +579,18 @@ export default function IdeaDetailPage() {
                                             router.push(`/messages/${chatId}`);
                                         }}
                                         variant="ghost" 
-                                        className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-xl"
+                                        className="w-full h-10 bg-black border border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white font-bold text-[9px] uppercase tracking-widest rounded-none"
                                     >
                                         Message Architect
                                     </Button>
                                     
                                     {joinStatus === 'approved' && (
-                                        <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-xl">
-                                            <p className="text-[9px] font-black text-green-400 uppercase tracking-widest mb-1">Status: Operational</p>
-                                            <p className="text-xs text-zinc-500 leading-relaxed font-medium">You have been granted architectural access. Sync with the founder to begin execution.</p>
+                                        <div className="p-4 bg-black border border-white/10 rounded-none font-mono">
+                                            <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-red-600 animate-red-pulse rounded-full" />
+                                                Status: Operational
+                                            </p>
+                                            <p className="text-[10px] text-zinc-500 leading-relaxed uppercase">You have been granted architectural access. Sync with founder to begin execution.</p>
                                         </div>
                                     )}
                                 </div>
@@ -612,21 +598,21 @@ export default function IdeaDetailPage() {
 
                             {/* Artifact Links */}
                             {ideaData.githubUrl && (
-                                <div className="space-y-4 pt-4 border-t border-white/[0.04]">
-                                    <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Execution Artifacts</h3>
+                                <div className="space-y-3 pt-4 border-t border-white/5">
+                                    <h3 className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Execution Artifacts</h3>
                                     <a 
                                         href={ideaData.githubUrl} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] transition-all group"
+                                        className="flex items-center justify-between p-3 rounded-none bg-black border border-white/10 hover:bg-white/5 transition-all group"
                                     >
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center border border-white/[0.05] group-hover:border-indigo-400/30 transition-colors">
-                                                <Github className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400" />
+                                            <div className="w-8 h-8 rounded-none bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-white transition-colors">
+                                                <Github className="w-4 h-4 text-zinc-400 group-hover:text-white" />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-white leading-tight uppercase tracking-widest">Base Code</p>
-                                                <p className="text-[9px] text-zinc-600 font-black uppercase tracking-tight">Active Repository</p>
+                                                <p className="text-[10px] font-bold text-white leading-tight uppercase tracking-wider">Base Code</p>
+                                                <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-tight">Active Repository</p>
                                             </div>
                                         </div>
                                     </a>
@@ -634,42 +620,41 @@ export default function IdeaDetailPage() {
                             )}
 
                             {/* Sector Metadata */}
-                            <div className="pt-4 border-t border-white/[0.04] space-y-4">
-                                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Asset Intelligence</h3>
+                            <div className="pt-4 border-t border-white/5 space-y-3">
+                                <h3 className="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">Asset Intelligence</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-center">
-                                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Authority</p>
-                                        <p className="text-xs font-bold text-white">{ (ideaData.views || 0) > 100 ? 'Tier 1' : 'Seed' }</p>
+                                    <div className="p-3 bg-black border border-white/5 rounded-none text-center">
+                                        <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Authority</p>
+                                        <p className="text-[10px] font-bold text-white uppercase">{ (ideaData.views || 0) > 100 ? 'Tier 1' : 'Seed' }</p>
                                     </div>
-                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-center">
-                                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Signal</p>
-                                        <p className="text-xs font-bold text-indigo-400">High</p>
+                                    <div className="p-3 bg-black border border-white/5 rounded-none text-center">
+                                        <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Signal</p>
+                                        <p className="text-[10px] font-bold text-zinc-400 uppercase">High</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Network Insights */}
-                        <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">Network Activity</h4>
+                        <div className="p-6 rounded-none bg-black border border-white/10 font-mono">
+                            <h4 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-4">Network Velocity</h4>
                             <div className="flex items-center gap-3">
-                                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-indigo-500 w-[65%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+                                <div className="flex-1 h-1 bg-white/5 rounded-none overflow-hidden">
+                                    <div className="h-full bg-white w-[65%]"></div>
                                 </div>
-                                <span className="text-[9px] font-black text-white">65% Active</span>
+                                <span className="text-[8px] font-bold text-white">65% ACTIVE</span>
                             </div>
-                            <p className="mt-4 text-[10px] text-zinc-500 font-medium leading-relaxed">This idea is currently in the top 10% of refinement velocity in the <span className="text-indigo-300 font-bold">{ideaData.category}</span> sector.</p>
+                            <p className="mt-4 text-[10px] text-zinc-500 leading-normal uppercase">This idea is currently in the top 10% of refinement velocity in the <span className="text-white font-bold">{ideaData.category}</span> sector.</p>
                         </div>
                     </div>
                 </div>
 
                 {/* ─── Global Refinement Section ─── */}
-                <div id="discussion" className="pt-16 mt-24 mb-24 border-t border-white/[0.05] relative">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+                <div id="discussion" className="pt-12 mt-16 mb-20 border-t border-white/10 relative">
                     <div className="max-w-3xl mx-auto space-y-12">
-                        <div className="text-center space-y-4">
-                            <h2 className="text-4xl md:text-5xl font-light text-white tracking-tight">External Validation</h2>
-                            <p className="text-zinc-500 font-medium uppercase tracking-[0.2em] text-[10px]">Community Analysis & Stress Testing</p>
+                        <div className="text-center space-y-2 font-mono">
+                            <h2 className="text-2xl sm:text-4xl font-bold font-dot uppercase tracking-wider text-white">External Validation</h2>
+                            <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-[9px]">Community Analysis & Stress Testing</p>
                         </div>
                         <DiscussionSection ideaId={ideaId} />
                     </div>
@@ -698,7 +683,6 @@ export default function IdeaDetailPage() {
                     currentGithub={ideaData.githubUrl || ''}
                     currentVersion={ideaData.currentVersion || 1}
                     onSuccess={() => {
-                        // Refresh page data
                         window.location.reload();
                     }}
                 />
