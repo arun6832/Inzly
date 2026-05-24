@@ -121,7 +121,7 @@ export default function SavedIdeasPage() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-black font-dot tracking-tight text-foreground">Saved Ideas</h1>
-                            <p className="text-muted-foreground mt-1">Ideas you swiped right on.</p>
+                            <p className="text-muted-foreground mt-1">Ideas you liked or requested connection on.</p>
                         </div>
                     </div>
 
@@ -144,7 +144,7 @@ export default function SavedIdeasPage() {
                 {savedIdeas.length === 0 ? (
                     <div className="text-center py-24 bg-card rounded-2xl border border-border">
                         <h2 className="text-xl font-bold font-dot tracking-tight text-foreground mb-2">No saved ideas yet</h2>
-                        <p className="text-muted-foreground mb-6">Start discovering ideas and swipe right to save them.</p>
+                        <p className="text-muted-foreground mb-6">Start discovering ideas and request connection to save them.</p>
                         <Link href="/">
                             <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-11 font-semibold shadow-lg transition-transform hover:scale-105">Discover Ideas</Button>
                         </Link>

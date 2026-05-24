@@ -161,9 +161,12 @@ export default function MessagesDashboard() {
                                             ) : (
                                                 req.investorName
                                             )}{" "}
-                                            swiped right on you
+                                            wants to connect / discuss your idea
                                         </p>
                                         <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5 font-mono">Matched on: &ldquo;{req.ideaTitle}&rdquo;</p>
+                                        <p className="text-[11px] text-zinc-400 mt-1.5 leading-relaxed font-sans max-w-md">
+                                            Accepting will open a private chat room to discuss collaboration or investment.
+                                        </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <button

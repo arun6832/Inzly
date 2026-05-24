@@ -82,30 +82,48 @@ export default function ChatPage() {
                             } else {
                                 const { getDocs, query, collection, where } = await import("firebase/firestore");
                                 
-                                // 1. Check approved collaborations (Builder + Thinker)
-                                const collabQ = query(
+                                // 1. Check approved collaborations specifically between these two users (Builder + Thinker)
+                                const collabQ1 = query(
                                     collection(db, "collaborationRequests"),
-                                    where("status", "==", "approved")
+                                    where("status", "==", "approved"),
+                                    where("requesterId", "==", user.uid),
+                                    where("creatorId", "==", otherUserId)
                                 );
-                                const collabSnap = await getDocs(collabQ);
-                                let allowed = collabSnap.docs.some(d => {
-                                    const data = d.data();
-                                    return (data.requesterId === user.uid && data.creatorId === otherUserId) ||
-                                           (data.requesterId === otherUserId && data.creatorId === user.uid);
-                                });
+                                const collabSnap1 = await getDocs(collabQ1);
+                                let allowed = !collabSnap1.empty;
 
-                                // 2. Check approved matches (Investor + Thinker)
                                 if (!allowed) {
-                                    const matchQ = query(
-                                        collection(db, "matches"),
-                                        where("status", "==", "approved")
+                                    const collabQ2 = query(
+                                        collection(db, "collaborationRequests"),
+                                        where("status", "==", "approved"),
+                                        where("requesterId", "==", otherUserId),
+                                        where("creatorId", "==", user.uid)
                                     );
-                                    const matchSnap = await getDocs(matchQ);
-                                    allowed = matchSnap.docs.some(d => {
-                                        const data = d.data();
-                                        return (data.investorId === user.uid && data.thinkerId === otherUserId) ||
-                                               (data.investorId === otherUserId && data.thinkerId === user.uid);
-                                    });
+                                    const collabSnap2 = await getDocs(collabQ2);
+                                    allowed = !collabSnap2.empty;
+                                }
+
+                                // 2. Check approved matches specifically between these two users (Investor + Thinker)
+                                if (!allowed) {
+                                    const matchQ1 = query(
+                                        collection(db, "matches"),
+                                        where("status", "==", "approved"),
+                                        where("investorId", "==", user.uid),
+                                        where("thinkerId", "==", otherUserId)
+                                    );
+                                    const matchSnap1 = await getDocs(matchQ1);
+                                    allowed = !matchSnap1.empty;
+
+                                    if (!allowed) {
+                                        const matchQ2 = query(
+                                            collection(db, "matches"),
+                                            where("status", "==", "approved"),
+                                            where("investorId", "==", otherUserId),
+                                            where("thinkerId", "==", user.uid)
+                                        );
+                                        const matchSnap2 = await getDocs(matchQ2);
+                                        allowed = !matchSnap2.empty;
+                                    }
                                 }
 
                                 setIsMatchedOrCollab(allowed);
