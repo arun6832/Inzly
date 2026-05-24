@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { 
     ChevronLeft, Share2, BookmarkPlus, 
-    Lock, Eye, ShieldCheck, Flag, MessageSquare, Sparkles 
+    Lock, Eye, ShieldCheck, Flag, MessageSquare, Sparkles, Heart 
 } from "lucide-react";
 import { Github } from "@/components/icons";
 import { useAuth } from "@/lib/AuthContext";
@@ -32,12 +32,13 @@ interface Idea {
     executionStatus?: ExecutionStatus;
     currentVersion?: number;
     visibility?: "public" | "restricted" | "investor";
+    tags?: string[];
 }
 
 export default function IdeaDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user, userMode } = useAuth();
+    const { user, userMode, userData } = useAuth();
 
     const [ideaData, setIdeaData] = useState<Idea | null>(null);
     const [linkedProblem, setLinkedProblem] = useState<Problem | null>(null);
@@ -125,6 +126,34 @@ export default function IdeaDetailPage() {
         }
     }, [ideaId]);
 
+    const [matchedStatus, setMatchedStatus] = useState<'none' | 'pending' | 'approved'>('none');
+    const [isInvestorRole, setIsInvestorRole] = useState(false);
+    const [requestingMatch, setRequestingMatch] = useState(false);
+
+    const handleRequestMatch = async () => {
+        if (!user || !ideaData || requestingMatch) return;
+        setRequestingMatch(true);
+        try {
+            const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+            await addDoc(collection(db, "matches"), {
+                investorId: user.uid,
+                investorName: userData?.name || user.displayName || "Investor",
+                investorUsername: userData?.username || "unknown",
+                thinkerId: ideaData.userId,
+                ideaId,
+                ideaTitle: ideaData.title,
+                status: "pending",
+                createdAt: serverTimestamp()
+            });
+            setMatchedStatus('pending');
+            alert("Match request submitted to the Thinker!");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRequestingMatch(false);
+        }
+    };
+
     // Check interaction & join status
     useEffect(() => {
         if (!user || !ideaId) return;
@@ -132,6 +161,21 @@ export default function IdeaDetailPage() {
         const checkStatus = async () => {
             const { query, collection, where, getDocs } = await import("firebase/firestore");
             try {
+                setIsInvestorRole(userMode === 'catalyst');
+
+                // Check match status
+                const matchQ = query(collection(db, "matches"), where("investorId", "==", user.uid), where("ideaId", "==", ideaId));
+                const matchSnap = await getDocs(matchQ);
+                if (!matchSnap.empty) {
+                    setMatchedStatus(matchSnap.docs[0].data().status as any);
+                } else {
+                    // Check approved collaboration as matching fallback
+                    const collabQ = query(collection(db, "collaborationRequests"), where("requesterId", "==", user.uid), where("ideaId", "==", ideaId));
+                    const collabSnap = await getDocs(collabQ);
+                    if (!collabSnap.empty && collabSnap.docs[0].data().status === 'approved') {
+                        setMatchedStatus('approved');
+                    }
+                }
                 const savedQ = query(collection(db, "savedIdeas"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
                 const savedSnap = await getDocs(savedQ);
                 if (!savedSnap.empty) setHasSaved(true);
@@ -332,19 +376,56 @@ export default function IdeaDetailPage() {
                         >
                             <Share2 className="w-5 h-5" />
                         </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={async () => {
-                                if (!user) { router.push('/login'); return; }
-                                const { getOrCreateChat } = await import("@/lib/messaging");
-                                const chatId = await getOrCreateChat(user.uid, ideaData.userId);
-                                router.push(`/messages/${chatId}`);
-                            }}
-                            className="w-12 h-12 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
-                        >
-                            <MessageSquare className="w-5 h-5" />
-                        </Button>
+                        {isInvestorRole && !isOwner ? (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={async () => {
+                                    if (!user) { router.push('/login'); return; }
+                                    if (matchedStatus === 'none') {
+                                        await handleRequestMatch();
+                                    } else if (matchedStatus === 'approved') {
+                                        const { getOrCreateChat } = await import("@/lib/messaging");
+                                        const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                        router.push(`/messages/${chatId}`);
+                                    }
+                                }}
+                                disabled={matchedStatus === 'pending' || requestingMatch}
+                                className={`w-12 h-12 rounded-xl transition-all shadow-lg ${
+                                    matchedStatus === 'approved' ? 'bg-indigo-500/5 border border-indigo-500/10 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-400 shadow-indigo-500/5' :
+                                    matchedStatus === 'pending' ? 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed' :
+                                    'bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300'
+                                }`}
+                                title={
+                                    matchedStatus === 'approved' ? 'Message Architect (Matched)' :
+                                    matchedStatus === 'pending' ? 'Match Request Pending' :
+                                    'Like & Request Connection'
+                                }
+                            >
+                                {matchedStatus === 'approved' ? (
+                                    <MessageSquare className="w-5 h-5" />
+                                ) : matchedStatus === 'pending' ? (
+                                    <Sparkles className="w-5 h-5 animate-pulse" />
+                                ) : (
+                                    <Heart className="w-5 h-5 fill-pink-500/20" />
+                                )}
+                            </Button>
+                        ) : (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={async () => {
+                                    if (!user) { router.push('/login'); return; }
+                                    const { getOrCreateChat } = await import("@/lib/messaging");
+                                    const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                    router.push(`/messages/${chatId}`);
+                                }}
+                                className="w-12 h-12 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
+                                title="Message Architect"
+                            >
+                                <MessageSquare className="w-5 h-5" />
+                            </Button>
+                        )}
                         <Button 
                             variant="ghost" 
                             size="icon" 
@@ -379,6 +460,13 @@ export default function IdeaDetailPage() {
                             {ideaData.visibility === 'public' ? <Eye className="w-3 h-3 mr-2" /> : <Lock className="w-3 h-3 mr-2" />}
                             {ideaData.visibility === 'public' ? 'Public Domain' : ideaData.visibility === 'restricted' ? 'Restricted Access' : 'Investor Verified'}
                         </div>
+
+                        {/* Sector hashtags */}
+                        {ideaData.tags && ideaData.tags.map(tag => (
+                            <div key={tag} className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-[0.2em] shadow-lg shadow-blue-500/5">
+                                #{tag}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="space-y-4">
@@ -588,18 +676,44 @@ export default function IdeaDetailPage() {
                                          'Request to join team'}
                                     </Button>
                                     
-                                    <Button 
-                                        onClick={async () => {
-                                            if (!user) { router.push('/login'); return; }
-                                            const { getOrCreateChat } = await import("@/lib/messaging");
-                                            const chatId = await getOrCreateChat(user.uid, ideaData.userId);
-                                            router.push(`/messages/${chatId}`);
-                                        }}
-                                        variant="ghost" 
-                                        className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-xl"
-                                    >
-                                        Message Architect
-                                    </Button>
+                                    {isInvestorRole && !isOwner ? (
+                                        <Button 
+                                            onClick={async () => {
+                                                if (matchedStatus === 'none') {
+                                                    await handleRequestMatch();
+                                                } else if (matchedStatus === 'approved') {
+                                                    if (!user) { router.push('/login'); return; }
+                                                    const { getOrCreateChat } = await import("@/lib/messaging");
+                                                    const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                                    router.push(`/messages/${chatId}`);
+                                                }
+                                            }}
+                                            disabled={matchedStatus === 'pending' || requestingMatch}
+                                            className={`w-full h-12 font-bold text-xs rounded-xl transition-all ${
+                                                matchedStatus === 'approved' ? 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 border border-white/5' :
+                                                matchedStatus === 'pending' ? 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed' :
+                                                'bg-pink-600 hover:bg-pink-700 text-white shadow-xl shadow-pink-500/20'
+                                            }`}
+                                        >
+                                            {requestingMatch ? 'transmitting...' :
+                                             matchedStatus === 'approved' ? 'Message Architect (Matched)' :
+                                             matchedStatus === 'pending' ? 'Match Request Pending' :
+                                             'Like & Request Connection'}
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            onClick={async () => {
+                                                if (!user) { router.push('/login'); return; }
+                                                const { getOrCreateChat } = await import("@/lib/messaging");
+                                                const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                                router.push(`/messages/${chatId}`);
+                                            }}
+                                            variant="ghost" 
+                                            className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-xl"
+                                        >
+                                            Message Architect
+                                        </Button>
+                                    )}
                                     
                                     {joinStatus === 'approved' && (
                                         <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-xl">

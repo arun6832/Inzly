@@ -78,36 +78,14 @@ export default function GlobalSearch() {
         try {
             const resultsList: SearchResult[] = [];
 
-            // 1. Search Ideas (Title)
-            const ideasRef = collection(db, "ideas");
-            // Basic prefix match: startAt(text) to endAt(text + \uf8ff)
-            const ideasQ = query(
-                ideasRef, 
-                orderBy("title"), 
-                startAt(text), 
-                endAt(text + "\uf8ff"), 
-                limit(4)
-            );
-            const ideasSnap = await getDocs(ideasQ);
-            ideasSnap.forEach(doc => {
-                const data = doc.data();
-                resultsList.push({
-                    id: doc.id,
-                    type: 'idea',
-                    title: data.title,
-                    subtitle: data.category,
-                    path: `/idea/${doc.id}`
-                });
-            });
-
-            // 2. Search Users (Username)
+            // Search Users (Username)
             const usersRef = collection(db, "users");
             const usersQ = query(
                 usersRef, 
                 orderBy("username"), 
                 startAt(searchStr), 
                 endAt(searchStr + "\uf8ff"), 
-                limit(4)
+                limit(8) // Limit expanded to 8 since we search users only!
             );
             const usersSnap = await getDocs(usersQ);
             usersSnap.forEach(doc => {
@@ -150,7 +128,7 @@ export default function GlobalSearch() {
                 <div className="w-10 h-10 lg:w-full lg:h-10 bg-white/[0.03] lg:bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] rounded-xl flex items-center justify-center lg:pl-10 lg:pr-12 transition-all">
                     <Search className="h-4 w-4 text-zinc-500 group-hover:text-zinc-300 lg:absolute lg:left-3 lg:top-2.5 transition-colors" />
                     <span className="hidden lg:block text-sm text-zinc-500">
-                        {queryText || "Search..."}
+                        {queryText || "Search users..."}
                     </span>
                 </div>
                 
@@ -176,7 +154,7 @@ export default function GlobalSearch() {
                                 autoFocus
                                 value={queryText}
                                 onChange={(e) => setQueryText(e.target.value)}
-                                placeholder="Start typing..."
+                                placeholder="Search users by name or @username..."
                                 className="flex-1 bg-transparent border-none outline-none text-white text-sm placeholder:text-zinc-600"
                             />
                             {loading && <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />}
@@ -188,14 +166,14 @@ export default function GlobalSearch() {
                         <div className="max-h-[400px] overflow-y-auto p-2 space-y-1 custom-scrollbar">
                             {results.length > 0 ? (
                                 <>
-                                    {['idea', 'user'].map(type => {
+                                    {['user'].map(type => {
                                         const typeResults = results.filter(r => r.type === type);
                                         if (typeResults.length === 0) return null;
                                         
                                         return (
                                             <div key={type} className="pb-2">
                                                 <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600">
-                                                    {type === 'idea' ? 'Startup Ideas' : 'Builders'}
+                                                    Builders & Platform Users
                                                 </div>
                                                 {typeResults.map(res => (
                                                     <button
@@ -205,7 +183,7 @@ export default function GlobalSearch() {
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-colors">
-                                                                {res.type === 'idea' ? <Lightbulb className="w-4 h-4 text-yellow-500/60" /> : <User className="w-4 h-4 text-indigo-400/60" />}
+                                                                <User className="w-4 h-4 text-indigo-400/60" />
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">{res.title}</p>

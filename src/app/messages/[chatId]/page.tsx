@@ -18,7 +18,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, User, ShieldCheck } from "lucide-react";
+import { Send, ArrowLeft, User, ShieldCheck, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -36,7 +36,7 @@ interface Chat {
 
 export default function ChatPage() {
     const params = useParams() as { chatId: string };
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -45,13 +45,21 @@ export default function ChatPage() {
     const [otherUser, setOtherUser] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
     const [isOtherTyping, setIsOtherTyping] = useState(false);
+    const [isMatchedOrCollab, setIsMatchedOrCollab] = useState<boolean | null>(null);
 
     const isTypingLocal = useRef(false);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Redirect to login if unauthenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push("/login");
+        }
+    }, [user, authLoading, router]);
+
     // 1. Fetch Chat Info & Other User
     useEffect(() => {
-        if (!user || !params.chatId) return;
+        if (authLoading || !user || !params.chatId) return;
 
         const fetchChat = async () => {
             try {
@@ -60,13 +68,48 @@ export default function ChatPage() {
 
                 if (chatSnap.exists()) {
                     const chatData = chatSnap.data() as Chat;
-                    const otherUserId = chatData.participants.find(p => p !== user.uid);
+                    const otherUserId = chatData.participants?.find(p => p !== user.uid);
                     
                     if (otherUserId) {
                         const userRef = doc(db, "users", otherUserId);
                         const userSnap = await getDoc(userRef);
                         if (userSnap.exists()) {
                             setOtherUser({ id: userSnap.id, ...userSnap.data() });
+
+                            // Access check rule
+                            if (otherUserId === user.uid) {
+                                setIsMatchedOrCollab(true);
+                            } else {
+                                const { getDocs, query, collection, where } = await import("firebase/firestore");
+                                
+                                // 1. Check approved collaborations (Builder + Thinker)
+                                const collabQ = query(
+                                    collection(db, "collaborationRequests"),
+                                    where("status", "==", "approved")
+                                );
+                                const collabSnap = await getDocs(collabQ);
+                                let allowed = collabSnap.docs.some(d => {
+                                    const data = d.data();
+                                    return (data.requesterId === user.uid && data.creatorId === otherUserId) ||
+                                           (data.requesterId === otherUserId && data.creatorId === user.uid);
+                                });
+
+                                // 2. Check approved matches (Investor + Thinker)
+                                if (!allowed) {
+                                    const matchQ = query(
+                                        collection(db, "matches"),
+                                        where("status", "==", "approved")
+                                    );
+                                    const matchSnap = await getDocs(matchQ);
+                                    allowed = matchSnap.docs.some(d => {
+                                        const data = d.data();
+                                        return (data.investorId === user.uid && data.thinkerId === otherUserId) ||
+                                               (data.investorId === otherUserId && data.thinkerId === user.uid);
+                                    });
+                                }
+
+                                setIsMatchedOrCollab(allowed);
+                            }
                         }
                     }
                 }
@@ -78,7 +121,7 @@ export default function ChatPage() {
         };
 
         fetchChat();
-    }, [user, params.chatId]);
+    }, [user, authLoading, params.chatId]);
 
     // 2. Subscribe to Messages
     useEffect(() => {
@@ -173,7 +216,7 @@ export default function ChatPage() {
         }
     };
 
-    if (loading) {
+    if (authLoading || loading) {
         return (
             <div className="flex-1 flex justify-center items-center bg-[#050507]">
                 <div className="w-6 h-6 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
@@ -209,79 +252,97 @@ export default function ChatPage() {
                 </div>
             </header>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
-                <AnimatePresence initial={false}>
-                    {messages.map((msg) => (
-                        <motion.div 
-                            key={msg.id}
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            className={`flex ${msg.senderId === user?.uid ? "justify-end" : "justify-start"}`}
-                        >
-                            <div className={`max-w-[75%] px-4 py-3 rounded-[20px] text-sm font-medium leading-relaxed ${
-                                msg.senderId === user?.uid 
-                                    ? "bg-white text-black rounded-tr-none shadow-xl" 
-                                    : "bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-tl-none"
-                            }`}>
-                                {msg.text}
-                            </div>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-                
-                <AnimatePresence>
-                    {isOtherTyping && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="flex justify-start"
-                        >
-                            <div className="bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-[20px] rounded-tl-none px-4 py-3 flex items-center gap-1.5 h-[44px]">
-                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
-                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }} />
-                                <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }} />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+            {isMatchedOrCollab === false ? (
+                <div className="flex-1 flex flex-col items-center justify-center bg-[#050507] p-8 text-center relative z-20 overflow-hidden font-sans">
+                    <div className="absolute inset-0 z-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 relative z-10 shadow-2xl">
+                        <Lock className="w-6 h-6 text-indigo-400 animate-pulse" />
+                    </div>
+                    <h2 className="text-xl font-bold font-dot uppercase tracking-widest text-white mb-2 relative z-10">Secure Sector Locked</h2>
+                    <p className="text-xs text-zinc-500 max-w-sm mb-6 uppercase tracking-wider leading-relaxed relative z-10 font-mono">
+                        Direct communications require a mutual swiped match (Investor + Thinker) or approved project collaboration (Builder + Thinker).
+                    </p>
+                    <Button onClick={() => router.push("/messages")} className="bg-white text-black hover:bg-zinc-200 border border-white rounded-none px-6 h-11 font-mono uppercase tracking-widest text-[10px] font-bold relative z-10 shadow-lg">
+                        Return to Inbox
+                    </Button>
+                </div>
+            ) : (
+                <>
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+                        <AnimatePresence initial={false}>
+                            {messages.map((msg) => (
+                                <motion.div 
+                                    key={msg.id}
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    className={`flex ${msg.senderId === user?.uid ? "justify-end" : "justify-start"}`}
+                                >
+                                    <div className={`max-w-[75%] px-4 py-3 rounded-[20px] text-sm font-medium leading-relaxed ${
+                                        msg.senderId === user?.uid 
+                                            ? "bg-white text-black rounded-tr-none shadow-xl" 
+                                            : "bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-tl-none"
+                                    }`}>
+                                        {msg.text}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        
+                        <AnimatePresence>
+                            {isOtherTyping && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="flex justify-start"
+                                >
+                                    <div className="bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-[20px] rounded-tl-none px-4 py-3 flex items-center gap-1.5 h-[44px]">
+                                        <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                                        <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }} />
+                                        <motion.div className="w-1.5 h-1.5 bg-zinc-500 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }} />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                <div ref={scrollRef} />
-            </div>
+                        <div ref={scrollRef} />
+                    </div>
 
-            {/* Input Bar */}
-            <div className="p-4 bg-[#050507] border-t border-white/[0.04]">
-                <form 
-                    onSubmit={handleSendMessage}
-                    className="max-w-4xl mx-auto relative flex items-center"
-                >
-                    <input 
-                        type="text" 
-                        value={newMessage}
-                        onChange={handleInputChange}
-                        placeholder="Discuss project or investment..."
-                        className="w-full bg-[#121218] border border-white/[0.08] rounded-2xl pl-6 pr-16 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
-                    />
-                    <AnimatePresence>
-                        {newMessage.trim() && (
-                            <motion.button 
-                                initial={{ opacity: 0, scale: 0.8, rotate: -20 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.8, rotate: -20 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                type="submit"
-                                className="absolute right-2 bg-indigo-500 text-white hover:bg-indigo-400 rounded-xl w-10 h-10 flex items-center justify-center transition-colors shadow-xl shadow-indigo-500/20"
-                            >
-                                <Send className="w-4 h-4 ml-0.5" />
-                            </motion.button>
-                        )}
-                    </AnimatePresence>
-                </form>
-                <p className="text-center text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em] mt-3 py-1">
-                    Encrypted Industrial Communication Pipeline
-                </p>
-            </div>
+                    {/* Input Bar */}
+                    <div className="p-4 bg-[#050507] border-t border-white/[0.04]">
+                        <form 
+                            onSubmit={handleSendMessage}
+                            className="max-w-4xl mx-auto relative flex items-center"
+                        >
+                            <input 
+                                type="text" 
+                                value={newMessage}
+                                onChange={handleInputChange}
+                                placeholder="Discuss project or investment..."
+                                className="w-full bg-[#121218] border border-white/[0.08] rounded-2xl pl-6 pr-16 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
+                            />
+                            <AnimatePresence>
+                                {newMessage.trim() && (
+                                    <motion.button 
+                                        initial={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                        type="submit"
+                                        className="absolute right-2 bg-indigo-500 text-white hover:bg-indigo-400 rounded-xl w-10 h-10 flex items-center justify-center transition-colors shadow-xl shadow-indigo-500/20"
+                                    >
+                                        <Send className="w-4 h-4 ml-0.5" />
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
+                        </form>
+                        <p className="text-center text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em] mt-3 py-1">
+                            Encrypted Industrial Communication Pipeline
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

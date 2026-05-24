@@ -59,6 +59,9 @@ export default function TeamManagement({ ideaId, ideaTitle, creatorId }: { ideaI
             if (action === 'approved') {
                 const chatId = await getOrCreateChat(creatorId, requesterId);
                 await sendMessage(chatId, creatorId, `Welcome to the team! I've approved your request to join "${ideaTitle}". Let's build.`);
+                
+                // Mark idea as accepted so Viewers can see it
+                await updateDoc(doc(db, "ideas", ideaId), { isAccepted: true });
             }
 
             setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: action } : r));

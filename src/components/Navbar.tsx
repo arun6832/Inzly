@@ -102,18 +102,22 @@ export default function Navbar() {
                         {user ? (
                             <div className="flex items-center gap-2">
                                 {/* Post Idea (Desktop) */}
-                                <Link href="/create" className="hidden sm:block">
-                                    <Button className="bg-white text-black hover:bg-white/90 border border-white rounded-xl px-5 h-9 text-xs font-mono uppercase tracking-widest font-bold transition-all shadow-md">
-                                        Post Idea
-                                    </Button>
-                                </Link>
+                                {userMode !== 'explorer' && (
+                                    <Link href="/create" className="hidden sm:block">
+                                        <Button className="bg-white text-black hover:bg-white/90 border border-white rounded-xl px-5 h-9 text-xs font-mono uppercase tracking-widest font-bold transition-all shadow-md">
+                                            Post Idea
+                                        </Button>
+                                    </Link>
+                                )}
 
                                 {/* Post Idea (Mobile Icon) */}
-                                <Link href="/create" className="sm:hidden" onClick={closeMenu}>
-                                    <Button size="icon" className="bg-white text-black rounded-xl w-9 h-9 border border-white">
-                                        <Rocket className="w-4 h-4" />
-                                    </Button>
-                                </Link>
+                                {userMode !== 'explorer' && (
+                                    <Link href="/create" className="sm:hidden" onClick={closeMenu}>
+                                        <Button size="icon" className="bg-white text-black rounded-xl w-9 h-9 border border-white">
+                                            <Rocket className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
+                                )}
 
                                 {/* User Profile Dropdown */}
                                 <div className="relative" ref={profileRef}>

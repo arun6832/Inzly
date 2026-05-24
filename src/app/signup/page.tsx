@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Mail, Lock, User, CheckCircle2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AuthTelemetryPanel from "@/components/AuthTelemetryPanel";
+import { PREDEFINED_TAGS } from "@/lib/constants";
 
 export default function SignupPage() {
     const [name, setName] = useState("");
@@ -25,6 +26,7 @@ export default function SignupPage() {
     const [mode, setMode] = useState("explorer");
     const [loading, setLoading] = useState(false);
     const [checkingUsername, setCheckingUsername] = useState(false);
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [success, setSuccess] = useState(false);
 
     const validateUsername = (val: string) => {
@@ -92,6 +94,7 @@ export default function SignupPage() {
                 totalLikes: 0,
                 emailVerified: false,
                 createdAt: serverTimestamp(),
+                interests: selectedInterests
             });
 
             setSuccess(true);
@@ -246,10 +249,10 @@ export default function SignupPage() {
                                             </SelectTrigger>
                                             <SelectContent className="bg-black border border-white/10 text-white rounded-none">
                                                 {[
-                                                    { id: "explorer", label: "Explorer" },
-                                                    { id: "sparker", label: "Sparker" },
+                                                    { id: "explorer", label: "Viewer" },
+                                                    { id: "sparker", label: "Thinker" },
                                                     { id: "builder", label: "Builder" },
-                                                    { id: "catalyst", label: "Catalyst" }
+                                                    { id: "catalyst", label: "Investor" }
                                                 ].map(m => (
                                                     <SelectItem key={m.id} value={m.id} className="focus:bg-white focus:text-black cursor-pointer rounded-none my-1 font-mono text-xs uppercase tracking-wide">{m.label}</SelectItem>
                                                 ))}
@@ -278,6 +281,40 @@ export default function SignupPage() {
                                         </Select>
                                     </div>
                                 </div>
+
+                                {mode === 'catalyst' && (
+                                    <div className="space-y-2 pt-2">
+                                        <Label className="text-zinc-400 font-mono font-bold text-[9px] uppercase tracking-widest ml-1 block">
+                                            Investment Focus Hashtags / Interests
+                                        </Label>
+                                        <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wide ml-1 block -mt-1">
+                                            Select the hashtags to customize your Discovery Feed
+                                        </span>
+                                        <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto p-3 bg-white/[0.02] border border-white/10 rounded-xl custom-scrollbar">
+                                            {PREDEFINED_TAGS.map(tag => {
+                                                const isSelected = selectedInterests.includes(tag);
+                                                return (
+                                                    <button
+                                                        key={tag}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedInterests(prev => 
+                                                                prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                                                            );
+                                                        }}
+                                                        className={`px-2 py-0.5 rounded font-mono text-[9px] font-bold uppercase transition-all border ${
+                                                            isSelected 
+                                                            ? 'bg-blue-600 text-white border-blue-500' 
+                                                            : 'bg-transparent text-zinc-500 border-white/5 hover:text-white hover:border-white/10'
+                                                        }`}
+                                                    >
+                                                        #{tag}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-1">
                                     <Label htmlFor="password" className="text-zinc-400 font-mono font-bold text-[9px] uppercase tracking-widest ml-1">Password</Label>

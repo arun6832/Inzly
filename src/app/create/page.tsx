@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { containsSpam } from "@/lib/filter";
 import { Github } from "@/components/icons";
 import { getCurrentLocation, getNearestCity, encodeGeohash, ExecutionStatus } from "@/lib/geoUtils";
+import { PREDEFINED_TAGS } from "@/lib/constants";
 
 const CATEGORIES = [
     "SaaS",
@@ -27,7 +29,7 @@ const CATEGORIES = [
 ];
 
 export default function CreateIdeaPage() {
-    const { user, loading } = useAuth();
+    const { user, loading, userMode } = useAuth();
     const router = useRouter();
 
     const [mode, setMode] = useState<"idea" | "problem">("idea");
@@ -41,6 +43,7 @@ export default function CreateIdeaPage() {
     const [problems, setProblems] = useState<any[]>([]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [error, setError] = useState("");
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; city: string } | null>(null);
 
@@ -88,6 +91,23 @@ export default function CreateIdeaPage() {
         );
     }
 
+    if (userMode === 'explorer') {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-black min-h-screen nothing-grid text-center">
+                <div className="w-16 h-16 rounded-2xl bg-zinc-500/10 border border-zinc-500/20 flex items-center justify-center mb-6">
+                    <Lock className="w-6 h-6 text-zinc-400 animate-pulse" />
+                </div>
+                <h2 className="text-xl font-bold font-dot uppercase tracking-widest text-zinc-400 mb-2">Publishing Restricted</h2>
+                <p className="text-xs text-zinc-500 max-w-sm mb-6 uppercase tracking-wider leading-relaxed">
+                    Viewers are restricted from creating or publishing ideas on Inzly. Please upgrade your role to Thinker or Builder in your profile to participate.
+                </p>
+                <Button onClick={() => router.push("/")} className="bg-white text-black hover:bg-zinc-200 border border-white rounded-none px-6 h-11 font-mono uppercase tracking-widest text-[10px] font-bold">
+                    Return to Feed
+                </Button>
+            </div>
+        );
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !description || !category) {
@@ -111,7 +131,7 @@ export default function CreateIdeaPage() {
                 const city = getNearestCity(pos.lat, pos.lng);
                 loc = { ...pos, city };
                 setUserLocation(loc);
-            } catch (err) {
+            } catch {
                 setError("Location access is required to participate. Please enable location permissions.");
                 setIsSubmitting(false);
                 return;
@@ -132,7 +152,8 @@ export default function CreateIdeaPage() {
                         lng: loc.lng,
                         city: loc.city,
                         geohash: encodeGeohash(loc.lat, loc.lng)
-                    }
+                    },
+                    tags: selectedTags
                 });
             } else {
                 const ideaDoc = await addDoc(collection(db, "ideas"), {
@@ -151,7 +172,8 @@ export default function CreateIdeaPage() {
                         city: loc.city,
                         geohash: encodeGeohash(loc.lat, loc.lng)
                     },
-                    visibility: visibility
+                    visibility: visibility,
+                    tags: selectedTags
                 });
 
                 // Create initial v1 snapshot
@@ -286,7 +308,7 @@ export default function CreateIdeaPage() {
                                             <SelectItem value="investor" className="focus:bg-white focus:text-black cursor-pointer rounded-none my-1 font-mono text-xs">
                                                 <div className="flex flex-col items-start gap-0.5 py-1">
                                                     <span className="font-bold uppercase tracking-wider">Investor Only</span>
-                                                    <span className="text-[8px] text-zinc-500 uppercase tracking-tight font-medium">Only Catalysts + Soft NDA.</span>
+                                                    <span className="text-[8px] text-zinc-500 uppercase tracking-tight font-medium">Only Investors + Soft NDA.</span>
                                                 </div>
                                             </SelectItem>
                                         </SelectContent>
@@ -343,6 +365,65 @@ export default function CreateIdeaPage() {
                                 />
                             </div>
                         )}
+
+                        {/* Hashtag / Sector Interests Selector */}
+                        <div className="space-y-3 pt-2">
+                            <Label className="text-zinc-400 font-mono font-bold text-[9px] uppercase tracking-widest block">
+                                Hashtags / Tags (Optional)
+                            </Label>
+                            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wide block -mt-1">
+                                Click predefined tags or type custom ones below (comma-separated)
+                            </span>
+                            
+                            <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto p-3 bg-white/[0.02] border border-white/5 rounded-xl custom-scrollbar">
+                                {PREDEFINED_TAGS.map(tag => {
+                                    const isSelected = selectedTags.includes(tag);
+                                    return (
+                                        <button
+                                            key={tag}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedTags(prev => 
+                                                    prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                                                );
+                                            }}
+                                            className={`px-2.5 py-1 rounded-lg font-mono text-[9px] font-bold uppercase transition-all border ${
+                                                isSelected 
+                                                ? 'bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20' 
+                                                : 'bg-transparent text-zinc-500 border-white/10 hover:text-white hover:border-white/20'
+                                            }`}
+                                        >
+                                            #{tag}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            <Input
+                                placeholder="Add custom tags (comma separated, e.g. cleanenergy, battery)"
+                                className="h-11 bg-transparent border-white/10 text-white rounded-none focus-visible:border-white focus-visible:ring-0 px-4 text-xs font-mono placeholder:text-zinc-700"
+                                onChange={(e) => {
+                                    const custom = e.target.value.split(",")
+                                        .map(t => t.trim().toLowerCase().replace(/#/g, ""))
+                                        .filter(t => t.length > 0);
+                                    setSelectedTags(prev => {
+                                        const predefined = prev.filter(t => PREDEFINED_TAGS.includes(t));
+                                        return Array.from(new Set([...predefined, ...custom]));
+                                    });
+                                }}
+                            />
+                            
+                            {selectedTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 pt-1.5 items-center">
+                                    <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider">Active:</span>
+                                    {selectedTags.map(tag => (
+                                        <span key={tag} className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[9px] font-bold uppercase">
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex justify-end space-x-4 pt-6 mt-4 border-t border-white/10">

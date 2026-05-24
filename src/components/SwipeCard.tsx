@@ -20,6 +20,7 @@ interface Idea {
     authorUsername?: string;
     authorTrustScore?: number;
     visibility?: "public" | "restricted" | "investor";
+    tags?: string[];
 }
 
 interface SwipeCardProps {
@@ -27,12 +28,13 @@ interface SwipeCardProps {
     onSwipe: (dir: "left" | "right") => void;
     active: boolean;
     zIndex: number;
+    userMode?: string;
 }
 
 const SWIPE_THRESHOLD = 80;
 const EXIT_DISTANCE = 600;
 
-export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardProps) {
+export default function SwipeCard({ idea, onSwipe, active, zIndex, userMode }: SwipeCardProps) {
     const [exiting, setExiting] = useState(false);
     const router = useRouter();
 
@@ -149,6 +151,15 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                         <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-bold font-mono bg-white/5 text-zinc-400 border border-border uppercase tracking-wider">
                             {idea.category}
                         </span>
+                        {idea.tags && idea.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 max-w-full">
+                                {idea.tags.map(tag => (
+                                    <span key={tag} className="px-2 py-0.5 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-400 font-mono text-[9px] font-bold uppercase tracking-wider">
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         {idea.authorUsername && (
                             <button 
                                 onClick={(e) => {
@@ -232,31 +243,48 @@ export default function SwipeCard({ idea, onSwipe, active, zIndex }: SwipeCardPr
                             Read Details
                         </Button>
                     </Link>
-                    <Button 
-                        size="icon" 
-                        variant="ghost"
-                        onClick={async (e) => {
-                            e.stopPropagation();
-                            const { getOrCreateChat } = await import("@/lib/messaging");
-                            if (!active) return;
-                            const { auth } = await import("@/lib/firebase");
-                            const currentUser = auth.currentUser;
-                            if (!currentUser) {
-                                window.location.href = "/login";
-                                return;
-                            }
-                            if (currentUser.uid === idea.userId) {
-                                alert("This is your idea. Visit Messages to see your chats.");
-                                return;
-                            }
-                            const chatId = await getOrCreateChat(currentUser.uid, idea.userId);
-                            window.location.href = `/messages/${chatId}`;
-                        }}
-                        className="text-zinc-400 hover:text-white rounded-lg bg-card border border-border hover:bg-white/5 w-9 h-9 flex items-center justify-center p-0"
-                        title="Chat with Architect"
-                    >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                    </Button>
+                    {userMode === 'catalyst' ? (
+                        <Button 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (!active) return;
+                                handleManualSwipe("right");
+                                alert("Concept Liked! Match request sent to the Architect. Chat will unlock once they accept.");
+                            }}
+                            className="text-pink-400 hover:text-pink-300 rounded-lg bg-card border border-pink-500/20 hover:bg-pink-500/5 w-9 h-9 flex items-center justify-center p-0 shadow-lg shadow-pink-500/5"
+                            title="Like & Request Match"
+                        >
+                            <Heart className="w-3.5 h-3.5 fill-pink-500/20" />
+                        </Button>
+                    ) : (
+                        <Button 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                const { getOrCreateChat } = await import("@/lib/messaging");
+                                if (!active) return;
+                                const { auth } = await import("@/lib/firebase");
+                                const currentUser = auth.currentUser;
+                                if (!currentUser) {
+                                    window.location.href = "/login";
+                                    return;
+                                }
+                                if (currentUser.uid === idea.userId) {
+                                    alert("This is your idea. Visit Messages to see your chats.");
+                                    return;
+                                }
+                                const chatId = await getOrCreateChat(currentUser.uid, idea.userId);
+                                window.location.href = `/messages/${chatId}`;
+                            }}
+                            className="text-zinc-400 hover:text-white rounded-lg bg-card border border-border hover:bg-white/5 w-9 h-9 flex items-center justify-center p-0"
+                            title="Chat with Architect"
+                        >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
                     <Button 
                         size="icon" 
                         variant="ghost"

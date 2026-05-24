@@ -13,7 +13,7 @@ interface LogMessage {
 const DUMMY_MESSAGES = [
     { level: "INFO", message: "handshake handshake initialized with node_nz_01" },
     { level: "SUCCESS", message: "handshake verification completed successfully" },
-    { level: "INFO", message: "decrypting core sector metrics for active explorers" },
+    { level: "INFO", message: "decrypting core sector metrics for active viewers" },
     { level: "CORE", message: "integrity metrics loaded. trust factor: stable" },
     { level: "SUCCESS", message: "ip location encrypted. vector mapping complete" },
     { level: "INFO", message: "scanning District coordinates for local opportunities" },

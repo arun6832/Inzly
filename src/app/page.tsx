@@ -6,9 +6,9 @@ import { db } from "@/lib/firebase";
 import SwipeCard from "@/components/SwipeCard";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import PreviewSwipeCard from "@/components/PreviewSwipeCard";
-import { PRECISE_AI_NEWS } from "@/lib/constants";
+import { PRECISE_AI_NEWS, getLaymanRole } from "@/lib/constants";
 
 interface Idea {
   id: string;
@@ -30,7 +30,7 @@ interface Idea {
 }
 
 export default function Home() {
-  const { user, userMode } = useAuth();
+  const { user, userMode, userData } = useAuth();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [userCount, setUserCount] = useState<number | null>(null);
@@ -76,6 +76,16 @@ export default function Home() {
         snapshot.forEach((doc) => {
             if (!interactedIdeaIds.has(doc.id)) {
                 const data = doc.data();
+                if (finalUserMode === 'explorer' && !data.isAccepted) {
+                    return; // Skip non-accepted ideas for Viewers
+                }
+                if (finalUserMode === 'catalyst' && userData?.interests && userData.interests.length > 0) {
+                    const ideaTags = data.tags || [];
+                    const hasInterestMatch = ideaTags.some((t: string) => userData.interests.includes(t.toLowerCase()));
+                    if (!hasInterestMatch) {
+                        return; // Skip ideas without matching tag interests
+                    }
+                }
                 rawIdeas.push({ id: doc.id, ...data });
             }
         });
@@ -104,7 +114,7 @@ export default function Home() {
       }
     };
     fetchIdeas();
-  }, [user?.uid, userMode]);
+  }, [user?.uid, userMode, userData]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -157,9 +167,32 @@ export default function Home() {
       try {
         const { collection, getDocs, query, where, addDoc, serverTimestamp } = await import("firebase/firestore");
         const savedQ = query(collection(db, "savedIdeas"), where("userId", "==", user.uid), where("ideaId", "==", idea.id));
-        const savedSnap = await getDocs(savedQ);
+        const likedQ = query(collection(db, "likes"), where("userId", "==", user.uid), where("ideaId", "==", idea.id));
+        const [savedSnap, likedSnap] = await Promise.all([getDocs(savedQ), getDocs(likedQ)]);
+        
         if (savedSnap.empty) {
           await addDoc(collection(db, "savedIdeas"), { userId: user.uid, ideaId: idea.id, createdAt: serverTimestamp() });
+        }
+        if (likedSnap.empty) {
+          await addDoc(collection(db, "likes"), { userId: user.uid, ideaId: idea.id, createdAt: serverTimestamp() });
+        }
+
+        // Match Request system for Investor liking Thinker's idea
+        if (userMode === 'catalyst' && idea.userId !== user.uid) {
+          const matchQ = query(collection(db, "matches"), where("investorId", "==", user.uid), where("ideaId", "==", idea.id));
+          const matchSnap = await getDocs(matchQ);
+          if (matchSnap.empty) {
+            await addDoc(collection(db, "matches"), {
+              investorId: user.uid,
+              investorName: userData?.name || user.displayName || "Investor",
+              investorUsername: userData?.username || "unknown",
+              thinkerId: idea.userId,
+              ideaId: idea.id,
+              ideaTitle: idea.title,
+              status: "pending",
+              createdAt: serverTimestamp()
+            });
+          }
         }
       } catch (err) { console.error(err); }
     }
@@ -495,23 +528,31 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2-Column: Swipe Card | Author Panel */}
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_290px] gap-6 items-start">
+        {/* Centered 2-Column Grid: Swipe Card | Author Panel */}
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_290px] gap-8 items-start">
 
-          {/* LEFT: Swipe Card */}
+          {/* LEFT: Swipe Card (Enlarged for readability) */}
           <div className="flex justify-center lg:justify-start">
             {ideas.length === 0 ? (
-              <div className="text-center space-y-5 bg-card border border-border rounded-2xl p-10 shadow-xl w-full max-w-[420px]">
+              <div className="text-center space-y-5 bg-card border border-border rounded-2xl p-10 shadow-xl w-full max-w-[520px]">
                 <div>
-                  <h2 className="text-xl font-bold font-dot tracking-tight text-foreground mb-2">You&apos;re all caught up</h2>
-                  <p className="text-muted-foreground text-sm">No fresh ideas right now. Check back later or post your own!</p>
+                  <h2 className="text-xl font-bold font-dot tracking-tight text-foreground mb-2">
+                    {userMode === 'catalyst' && userData?.interests && userData.interests.length > 0
+                      ? "No matching interests found"
+                      : "You're all caught up"}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {userMode === 'catalyst' && userData?.interests && userData.interests.length > 0
+                      ? "No active ideas match your selected hashtags. Adjust your tags in profile settings to expand your discovery stream!"
+                      : "No fresh ideas right now. Check back later or post your own!"}
+                  </p>
                 </div>
                 <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 h-11 font-semibold w-full">
                   Refresh Feed
                 </Button>
               </div>
             ) : (
-              <div className="relative w-full max-w-[420px] h-[580px] sm:h-[640px] max-h-[75vh]">
+              <div className="relative w-full max-w-[520px] h-[640px] sm:h-[700px] max-h-[80vh]">
                 {[...ideas].reverse().map((idea, index) => {
                   const realIndex = ideas.length - 1 - index;
                   return (
@@ -521,6 +562,7 @@ export default function Home() {
                       active={realIndex === 0}
                       zIndex={ideas.length - realIndex}
                       onSwipe={(dir) => handleSwipe(dir, idea)}
+                      userMode={userMode}
                     />
                   );
                 })}
@@ -528,84 +570,92 @@ export default function Home() {
             )}
           </div>
 
-          {/* RIGHT: Author Profile Panel */}
-          {ideas.length > 0 && (() => {
-            const cur = ideas[0];
-            const modeColors: Record<string, string> = {
-              explorer: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-              sparker:  "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-              builder:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
-              catalyst: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-            };
-            const modeColor = modeColors[cur.authorMode || "explorer"] || modeColors.explorer;
-            return (
-              <motion.div
-                key={cur.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="hidden lg:flex flex-col gap-4 sticky top-20"
-              >
-                {/* Author Card */}
-                <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-                  <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Idea Author</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                      <span className="text-blue-400 font-black font-dot text-base">
-                        {(cur.authorName || cur.authorUsername || "?")[0].toUpperCase()}
-                      </span>
+          {/* RIGHT: Author Profile Panel (Animated together with swiping) */}
+          <div className="hidden lg:block relative sticky top-20 w-[290px] self-start">
+            <AnimatePresence mode="popLayout">
+              {ideas.length > 0 && (() => {
+                const cur = ideas[0];
+                const modeColors: Record<string, string> = {
+                  explorer: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+                  sparker:  "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+                  builder:  "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                  catalyst: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+                };
+                const modeColor = modeColors[cur.authorMode || "explorer"] || modeColors.explorer;
+                return (
+                  <motion.div
+                    key={cur.id}
+                    initial={{ opacity: 0, x: 40, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -40, scale: 0.95 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex flex-col gap-4 w-full"
+                  >
+                    {/* Author Card */}
+                    <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+                      <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Idea Author</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                          <span className="text-blue-400 font-black font-dot text-base">
+                            {(cur.authorName || cur.authorUsername || "?")[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-foreground font-bold font-dot tracking-tight truncate">{cur.authorName || cur.authorUsername || "Unknown"}</p>
+                          <p className="text-muted-foreground text-xs">@{cur.authorUsername}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border capitalize ${modeColor}`}>
+                          {getLaymanRole(cur.authorMode)}
+                        </span>
+                        {cur.authorCountry && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg border border-border bg-background text-muted-foreground">{cur.authorCountry}</span>
+                        )}
+                      </div>
+                      {cur.authorBio && (
+                        <p className="text-xs text-muted-foreground leading-relaxed border-t border-border pt-3">{cur.authorBio}</p>
+                      )}
+                      <div className="flex items-center gap-4 border-t border-border pt-3">
+                        <div>
+                          <p className="text-base font-black font-dot text-foreground">{cur.authorTotalLikes ?? 0}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
+                        </div>
+                        <div className="w-px h-7 bg-border" />
+                        <div>
+                          <p className="text-base font-black font-dot text-foreground">{cur.authorTrustScore ?? 100}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Trust</p>
+                        </div>
+                      </div>
+                      <a href={`/user/${cur.authorUsername}`} className="flex items-center justify-center w-full h-9 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:border-blue-500/50 hover:text-blue-400 transition-colors">
+                        View Profile
+                      </a>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-foreground font-bold font-dot tracking-tight truncate">{cur.authorName || cur.authorUsername || "Unknown"}</p>
-                      <p className="text-muted-foreground text-xs">@{cur.authorUsername}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border capitalize ${modeColor}`}>{cur.authorMode || "Explorer"}</span>
-                    {cur.authorCountry && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg border border-border bg-background text-muted-foreground">{cur.authorCountry}</span>
-                    )}
-                  </div>
-                  {cur.authorBio && (
-                    <p className="text-xs text-muted-foreground leading-relaxed border-t border-border pt-3">{cur.authorBio}</p>
-                  )}
-                  <div className="flex items-center gap-4 border-t border-border pt-3">
-                    <div>
-                      <p className="text-base font-black font-dot text-foreground">{cur.authorTotalLikes ?? 0}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
-                    </div>
-                    <div className="w-px h-7 bg-border" />
-                    <div>
-                      <p className="text-base font-black font-dot text-foreground">{cur.authorTrustScore ?? 100}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Trust</p>
-                    </div>
-                  </div>
-                  <a href={`/user/${cur.authorUsername}`} className="flex items-center justify-center w-full h-9 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:border-blue-500/50 hover:text-blue-400 transition-colors">
-                    View Profile
-                  </a>
-                </div>
 
-                {/* Idea Stats */}
-                <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-                  <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">This Idea</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <p className="text-base font-black font-dot text-foreground">{cur.likesCount ?? 0}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
+                    {/* Idea Stats */}
+                    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+                      <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">This Idea</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <p className="text-base font-black font-dot text-foreground">{cur.likesCount ?? 0}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Likes</p>
+                        </div>
+                        <div>
+                          <p className="text-base font-black font-dot text-foreground">{cur.views ?? 0}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Views</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold font-dot text-foreground capitalize leading-snug">{cur.category}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Category</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-base font-black font-dot text-foreground">{cur.views ?? 0}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Views</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold font-dot text-foreground capitalize leading-snug">{cur.category}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Category</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })()}
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+          </div>
+
         </div>
       </div>
     </div>

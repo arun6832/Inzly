@@ -10,3 +10,25 @@ export const PRECISE_AI_NEWS = [
   "Microsoft and OpenAI announce 'Stargate', a $100B AI supercomputer project.",
   "Elon Musk's xAI open-sources Grok-1 weights for the developer community."
 ];
+
+export const USER_ROLES_MAP: Record<string, string> = {
+  explorer: "Viewer",
+  sparker: "Thinker",
+  builder: "Builder",
+  catalyst: "Investor",
+};
+
+export const getLaymanRole = (mode?: string): string => {
+  if (!mode) return "Viewer";
+  return USER_ROLES_MAP[mode.toLowerCase()] || "Viewer";
+};
+
+export const PREDEFINED_TAGS = [
+  "saas", "ai", "ml", "web3", "fintech", "healthtech", "biotech", "cleantech", 
+  "robotics", "iot", "edtech", "proptech", "agritech", "cybersecurity", 
+  "devops", "nocode", "ecommerce", "d2c", "marketplace", "creator-economy", 
+  "gaming", "vr-ar", "analytics", "bigdata", "cloud", "api", "logistics", 
+  "mobility", "spacetech", "medtech", "insurtech", "hrtech", "legaltech", 
+  "hardware", "wearables", "semiconductors", "blockchain", "nft", "defi", 
+  "climate", "sustainability", "energy"
+];

@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { deleteUser } from "firebase/auth";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { User, MapPin, Heart, Lightbulb, ChevronRight, MessageSquare, ArrowLeft, Edit3, Trash2, X, Save, ShieldCheck, ShieldAlert } from "lucide-react";
+import { MapPin, Heart, Lightbulb, ChevronRight, MessageSquare, ArrowLeft, Edit3, Trash2, X, Save, ShieldCheck, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { getLaymanRole, PREDEFINED_TAGS } from "@/lib/constants";
 
 interface UserProfile {
     id: string;
@@ -22,7 +23,8 @@ interface UserProfile {
     trustScore?: number;
     reportsCount?: number;
     contributionActivity?: number;
-    mode?: "builder" | "catalyst";
+    mode?: "explorer" | "sparker" | "builder" | "catalyst";
+    interests?: string[];
 }
 
 interface Idea {
@@ -49,7 +51,8 @@ export default function ProfilePage() {
     const [deleting, setDeleting] = useState(false);
     const [editName, setEditName] = useState("");
     const [editBio, setEditBio] = useState("");
-    const [editMode, setEditMode] = useState<"builder" | "catalyst">("builder");
+    const [editMode, setEditMode] = useState<"explorer" | "sparker" | "builder" | "catalyst">("builder");
+    const [editInterests, setEditInterests] = useState<string[]>([]);
     const [saveError, setSaveError] = useState("");
 
     const isOwnProfile = currentUser?.uid === profile?.id;
@@ -76,7 +79,7 @@ export default function ProfilePage() {
                 }
 
                 if (!userData) {
-                    setError("Builder not found.");
+                    setError("Profile not found.");
                     setLoading(false);
                     return;
                 }
@@ -118,6 +121,7 @@ export default function ProfilePage() {
         setEditName(profile?.name || "");
         setEditBio(profile?.bio || "");
         setEditMode(profile?.mode || "builder");
+        setEditInterests(profile?.interests || []);
         setSaveError("");
         setEditOpen(true);
     };
@@ -135,8 +139,9 @@ export default function ProfilePage() {
                 name: editName.trim(),
                 bio: editBio.trim(),
                 mode: editMode,
+                interests: editInterests,
             });
-            setProfile({ ...profile, name: editName.trim(), bio: editBio.trim(), mode: editMode });
+            setProfile({ ...profile, name: editName.trim(), bio: editBio.trim(), mode: editMode, interests: editInterests });
             setEditOpen(false);
         } catch (err) {
             console.error("Save failed", err);
@@ -241,18 +246,19 @@ export default function ProfilePage() {
                                     <div className="flex items-center justify-center gap-2 mt-1">
                                         <p className="text-zinc-500 font-bold text-sm tracking-tight">@{profile.username}</p>
                                         <div className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${
-                                            (profile.mode || 'builder') === 'builder' 
-                                            ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5' 
-                                            : 'text-amber-400 border-amber-500/20 bg-amber-500/5'
+                                            (profile.mode || 'builder') === 'explorer' ? 'text-zinc-400 border-zinc-500/20 bg-zinc-500/5' :
+                                            (profile.mode || 'builder') === 'sparker' ? 'text-yellow-400 border-yellow-500/20 bg-yellow-500/5' :
+                                            (profile.mode || 'builder') === 'builder' ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5' :
+                                            'text-purple-400 border-purple-500/20 bg-purple-500/5'
                                         }`}>
-                                            {profile.mode || 'builder'}
+                                            {getLaymanRole(profile.mode || 'builder')}
                                         </div>
                                     </div>
                                 </div>
 
                                 {profile.bio && (
                                     <p className="text-zinc-400 text-sm leading-relaxed px-4 italic">
-                                        "{profile.bio}"
+                                        &ldquo;{profile.bio}&rdquo;
                                     </p>
                                 )}
 
@@ -291,6 +297,17 @@ export default function ProfilePage() {
                                     )}
                                 </div>
 
+                                {/* Sector Interests tags */}
+                                {profile.interests && profile.interests.length > 0 && (
+                                    <div className="flex flex-wrap justify-center gap-1.5 px-4 pt-2">
+                                        {profile.interests.map(interest => (
+                                            <span key={interest} className="px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/5 text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-wider">
+                                                #{interest}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div className="space-y-4 pt-2">
                                     {profile.country && (
                                         <div className="flex items-center justify-center gap-2 text-zinc-500 font-medium text-xs">
@@ -304,7 +321,7 @@ export default function ProfilePage() {
                                             className="w-full bg-white text-black hover:bg-zinc-200 rounded-xl h-12 font-bold flex items-center justify-center gap-2"
                                         >
                                             <MessageSquare className="w-4 h-4" />
-                                            Message Builder
+                                            Message {getLaymanRole(profile.mode || 'builder')}
                                         </Button>
                                     )}
                                 </div>
@@ -354,7 +371,7 @@ export default function ProfilePage() {
                                                             {idea.title}
                                                         </h3>
                                                         <p className="text-sm text-zinc-500 line-clamp-1 italic font-medium">
-                                                            "{idea.problem}"
+                                                            &ldquo;{idea.problem}&rdquo;
                                                         </p>
                                                     </div>
                                                     <div className="flex items-center gap-6 shrink-0">
@@ -443,8 +460,28 @@ export default function ProfilePage() {
 
                                 {/* Mode Select */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Platform Mode</label>
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Platform Role</label>
                                     <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setEditMode("explorer")}
+                                            className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                editMode === 'explorer' 
+                                                ? 'bg-zinc-500/10 border-zinc-500 text-zinc-400 shadow-[0_0_15px_rgba(120,120,120,0.2)]' 
+                                                : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
+                                            }`}
+                                        >
+                                            Viewer
+                                        </button>
+                                        <button
+                                            onClick={() => setEditMode("sparker")}
+                                            className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                editMode === 'sparker' 
+                                                ? 'bg-yellow-500/10 border-yellow-500 text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]' 
+                                                : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
+                                            }`}
+                                        >
+                                            Thinker
+                                        </button>
                                         <button
                                             onClick={() => setEditMode("builder")}
                                             className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -453,25 +490,57 @@ export default function ProfilePage() {
                                                 : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
                                             }`}
                                         >
-                                            Founder
+                                            Builder
                                         </button>
                                         <button
                                             onClick={() => setEditMode("catalyst")}
                                             className={`p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
                                                 editMode === 'catalyst' 
-                                                ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
+                                                ? 'bg-purple-500/10 border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)]' 
                                                 : 'bg-white/5 border-white/10 text-zinc-600 hover:border-white/20'
                                             }`}
                                         >
-                                            Catalyst
+                                            Investor
                                         </button>
                                     </div>
                                     <p className="text-[9px] text-zinc-600 font-medium px-1">
-                                        {editMode === 'builder' 
-                                            ? 'Optimized for project architecture and team orchestration.' 
-                                            : 'Verified investor mode. Grants access to restricted high-signal concepts.'}
+                                        {editMode === 'explorer' && 'Optimal for silent tracking, learning, and analyzing stream flow.'}
+                                        {editMode === 'sparker' && 'Designed for conceptual seeds and high-level ideation.'}
+                                        {editMode === 'builder' && 'Optimized for project architecture and team orchestration.'}
+                                        {editMode === 'catalyst' && 'Verified investor mode. Grants access to restricted high-signal concepts.'}
                                     </p>
                                 </div>
+
+                                {editMode === 'catalyst' && (
+                                    <div className="space-y-1.5 pt-1">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block">
+                                            Investment Interests
+                                        </label>
+                                        <div className="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto p-2 bg-white/5 border border-white/10 rounded-xl custom-scrollbar">
+                                            {PREDEFINED_TAGS.map(tag => {
+                                                const isSelected = editInterests.includes(tag);
+                                                return (
+                                                    <button
+                                                        key={tag}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEditInterests(prev => 
+                                                                prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                                                            );
+                                                        }}
+                                                        className={`px-2 py-0.5 rounded font-mono text-[8px] font-bold uppercase transition-all border ${
+                                                            isSelected 
+                                                            ? 'bg-blue-600 text-white border-blue-500' 
+                                                            : 'bg-transparent text-zinc-500 border-white/5 hover:text-white hover:border-white/10'
+                                                        }`}
+                                                    >
+                                                        #{tag}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {saveError && (
                                     <p className="text-red-400 text-xs font-medium">{saveError}</p>
