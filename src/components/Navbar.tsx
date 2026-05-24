@@ -7,7 +7,8 @@ import { Button } from "./ui/button";
 import GlobalSearch from "./GlobalSearch";
 import { 
     Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, 
-    Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard
+    Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard,
+    Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,6 +41,40 @@ export default function Navbar() {
 
     const closeMenu = () => setMobileMenuOpen(false);
 
+    // Fetch pending likes count for badge
+    const [likesCount, setLikesCount] = useState(0);
+
+    useEffect(() => {
+        if (!user || (userMode !== 'sparker' && userMode !== 'builder')) {
+            setLikesCount(0);
+            return;
+        }
+
+        let unsubscribe = () => {};
+
+        const fetchBadgeCount = async () => {
+            try {
+                const { collection, query, where, onSnapshot } = await import("firebase/firestore");
+                const { db } = await import("@/lib/firebase");
+                
+                const q = query(
+                    collection(db, "matches"),
+                    where("thinkerId", "==", user.uid),
+                    where("status", "==", "pending")
+                );
+
+                unsubscribe = onSnapshot(q, (snap) => {
+                    setLikesCount(snap.size);
+                });
+            } catch (err) {
+                console.error("Failed to subscribe to likes count badge", err);
+            }
+        };
+
+        fetchBadgeCount();
+        return () => unsubscribe();
+    }, [user, userMode]);
+
     const initials = userData?.name
         ? userData.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
         : (userData?.username?.[0] || "?").toUpperCase();
@@ -48,6 +83,9 @@ export default function Navbar() {
 
     const navLinks = [
         { href: "/dashboard", label: "Studio", icon: LayoutDashboard },
+        ...(user && (userMode === 'sparker' || userMode === 'builder') ? [
+            { href: "/likes", label: "Likes", icon: Sparkles, badge: likesCount }
+        ] : []),
         { href: "/map", label: "Map", icon: MapPin },
         { href: "/leaderboard", label: "Rank", icon: Trophy },
         { href: "/messages", label: "Chats", icon: MessageSquare },
@@ -79,9 +117,14 @@ export default function Navbar() {
                         <div className={`hidden lg:flex items-center bg-card border border-border rounded-full shadow-lg transition-all duration-300 ${isScrolled ? "px-1 py-0.5" : "px-1.5 py-1"}`}>
                             {navLinks.map((link) => (
                                 <Link key={link.href} href={link.href}>
-                                    <button className={`flex items-center gap-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-all group font-sans font-medium ${isScrolled ? "px-3 py-1.5 text-[11px]" : "px-4 py-2 text-xs"}`}>
+                                    <button className={`relative flex items-center gap-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-all group font-sans font-medium ${isScrolled ? "px-3 py-1.5 text-[11px]" : "px-4 py-2 text-xs"}`}>
                                         <link.icon className={`group-hover:scale-105 transition-all duration-300 ${isScrolled ? "w-3 h-3" : "w-3.5 h-3.5"}`} />
                                         <span>{link.label}</span>
+                                        {link.badge !== undefined && link.badge > 0 && (
+                                            <span className="absolute -top-1.5 -right-1 bg-red-500 text-white font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse">
+                                                {link.badge}
+                                            </span>
+                                        )}
                                     </button>
                                 </Link>
                             ))}
@@ -209,9 +252,14 @@ export default function Navbar() {
                             <div className="grid grid-cols-2 gap-3">
                                 {navLinks.map((link) => (
                                     <Link key={link.href} href={link.href} onClick={closeMenu}>
-                                        <div className="flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.05] text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-all">
+                                        <div className="relative flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.05] text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-all">
                                             <link.icon className="w-5 h-5 mb-2" />
                                             <span className="text-[10px] font-black uppercase tracking-widest">{link.label}</span>
+                                            {link.badge !== undefined && link.badge > 0 && (
+                                                <span className="absolute top-2 right-2 bg-red-500 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse">
+                                                    {link.badge}
+                                                </span>
+                                            )}
                                         </div>
                                     </Link>
                                 ))}

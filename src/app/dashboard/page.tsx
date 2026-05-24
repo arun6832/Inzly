@@ -20,7 +20,8 @@ import {
     Lock,
     Eye,
     ChevronRight,
-    TrendingUp
+    TrendingUp,
+    Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,18 +60,6 @@ interface AuditLog {
     timestamp: any;
 }
 
-interface InvestorMatchRequest {
-    id: string;
-    investorId: string;
-    investorName: string;
-    investorUsername: string;
-    thinkerId: string;
-    ideaId: string;
-    ideaTitle: string;
-    status: 'pending' | 'approved';
-    createdAt: any;
-}
-
 export default function DashboardPage() {
     const { user, userMode } = useAuth();
     const router = useRouter();
@@ -80,7 +69,7 @@ export default function DashboardPage() {
     const [collaborations, setCollaborations] = useState<DashboardIdea[]>([]);
     const [requests, setRequests] = useState<InboundRequest[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-    const [investorLikes, setInvestorLikes] = useState<InvestorMatchRequest[]>([]);
+    const [pendingLikesCount, setPendingLikesCount] = useState(0);
 
     useEffect(() => {
         if (!user) {
@@ -180,10 +169,16 @@ export default function DashboardPage() {
                 setCollaborations(collabIdeasList);
 
                 // 5. Fetch Investor Likes / Connections (Matches where thinkerId == user.uid)
-                const matchesQ = query(collection(db, "matches"), where("thinkerId", "==", user.uid));
-                const matchesSnap = await getDocs(matchesQ);
-                const matchesList = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() } as InvestorMatchRequest));
-                setInvestorLikes(matchesList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+                if (user) {
+                    const matchesQ = query(
+                        collection(db, "matches"), 
+                        where("thinkerId", "==", user.uid),
+                        where("status", "==", "pending")
+                    );
+                    const matchesSnap = await getDocs(matchesQ);
+                    setPendingLikesCount(matchesSnap.size);
+                }
+
 
             } catch (err) {
                 console.error("Dashboard fetch failed", err);
@@ -216,44 +211,7 @@ export default function DashboardPage() {
         }
     };
 
-    const handleAcceptMatch = async (match: InvestorMatchRequest) => {
-        try {
-            const { doc, updateDoc, serverTimestamp } = await import("firebase/firestore");
-            // 1. Update match status
-            await updateDoc(doc(db, "matches", match.id), {
-                status: "approved",
-                updatedAt: serverTimestamp()
-            });
 
-            // 2. Update the idea document's isAccepted flag
-            await updateDoc(doc(db, "ideas", match.ideaId), {
-                isAccepted: true
-            });
-
-            // 3. Initiate Chat
-            const { getOrCreateChat, sendMessage } = await import("@/lib/messaging");
-            const chatId = await getOrCreateChat(user!.uid, match.investorId);
-            
-            // Send intro message
-            await sendMessage(chatId, user!.uid, `Hello! We connected on my idea: "${match.ideaTitle}". Let's discuss details!`);
-
-            setInvestorLikes(prev => prev.map(r => r.id === match.id ? { ...r, status: "approved" } : r));
-            alert("Connection Approved! Chat thread initialized.");
-        } catch (e) {
-            console.error("Failed to accept match", e);
-        }
-    };
-
-    const handleDismissMatch = async (matchId: string) => {
-        try {
-            const { doc, deleteDoc } = await import("firebase/firestore");
-            await deleteDoc(doc(db, "matches", matchId));
-            setInvestorLikes(prev => prev.filter(r => r.id !== matchId));
-            alert("Match request dismissed.");
-        } catch (e) {
-            console.error("Failed to dismiss match", e);
-        }
-    };
 
     if (loading) {
         return (
@@ -279,17 +237,44 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
+                {/* Real-time Dynamic likes notice */}
+                {pendingLikesCount > 0 && (
+                    <Link href="/likes">
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-5 rounded-2xl bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-transparent border border-purple-500/30 hover:border-purple-500/50 transition-all flex items-center justify-between gap-4 cursor-pointer shadow-[0_0_20px_rgba(168,85,247,0.05)] group"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-all">
+                                    <Sparkles className="w-5 h-5 animate-pulse" />
+                                </div>
+                                <div className="text-left font-sans">
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        Inbound Investor Signals
+                                        <span className="bg-red-500 text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse">
+                                            {pendingLikesCount} New
+                                        </span>
+                                    </h3>
+                                    <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider mt-1">Investors want to connect and discuss your innovations. Click here to manage requests.</p>
+                                </div>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
+                        </motion.div>
+                    </Link>
+                )}
+
                 <Tabs defaultValue="inbound" className="w-full space-y-8">
                     {/* Stark mechanical tabs container */}
-                    <TabsList className="w-full max-w-3xl bg-card border border-border p-1.5 h-14 rounded-2xl overflow-hidden shadow-2xl flex gap-1">
+                    <TabsList className="w-full max-w-2xl bg-card border border-border p-1.5 h-14 rounded-2xl overflow-hidden shadow-2xl flex gap-1">
                         <TabsTrigger value="inbound" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
                             <Clock className="w-3 h-3 mr-2" /> Inbound
+                            {requests.filter(r => r.status === 'pending').length > 0 && (
+                                <span className="ml-1.5 bg-red-500 text-white font-mono text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-[0_0_6px_rgba(239,68,68,0.6)] animate-pulse">
+                                    {requests.filter(r => r.status === 'pending').length}
+                                </span>
+                            )}
                         </TabsTrigger>
-                        {(userMode === 'sparker' || userMode === 'builder') && (
-                            <TabsTrigger value="likes" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
-                                <TrendingUp className="w-3 h-3 mr-2" /> Investor Likes
-                            </TabsTrigger>
-                        )}
                         <TabsTrigger value="portfolio" className="flex-1 h-full rounded-xl text-zinc-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-sans font-semibold text-xs transition-colors cursor-pointer">
                             <Lightbulb className="w-3 h-3 mr-2" /> Innovations
                         </TabsTrigger>
@@ -363,90 +348,7 @@ export default function DashboardPage() {
                         </section>
                     </TabsContent>
 
-                    {/* ─── Investor Likes ─── */}
-                    {(userMode === 'sparker' || userMode === 'builder') && (
-                        <TabsContent value="likes" className="animate-in fade-in-50 duration-500 space-y-6">
-                            <section className="space-y-4">
-                                <h2 className="text-[9px] font-bold font-mono text-zinc-500 uppercase tracking-[0.5em] mb-6">Investor Likes & Connection Requests</h2>
-                                
-                                {investorLikes.length === 0 ? (
-                                    <div className="py-20 text-center bg-black rounded-none border border-white/10 space-y-4 relative">
-                                        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto border border-white/10 z-10 relative">
-                                            <TrendingUp className="w-5 h-5 text-zinc-600" />
-                                        </div>
-                                        <p className="text-zinc-500 font-mono tracking-widest uppercase text-[9px] z-10 relative">No likes or connection requests from investors yet.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {investorLikes.map(match => (
-                                            <motion.div 
-                                                initial={{ opacity: 0, y: 5 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                key={match.id} 
-                                                className="p-6 sm:p-8 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden group hover:border-blue-500/40 transition-colors"
-                                            >
-                                                <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
 
-                                                <div className="flex items-start gap-6 relative z-10 font-mono">
-                                                    <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                                                        <TrendingUp className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <div className="flex flex-wrap items-center gap-3">
-                                                            <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 border border-purple-500/20 bg-black text-purple-400">
-                                                                Investor Connection
-                                                            </span>
-                                                            <span className="text-[8px] font-bold text-zinc-600 uppercase">Idea: {match.ideaTitle}</span>
-                                                        </div>
-                                                        <h3 className="text-lg font-bold text-white">
-                                                            {match.investorName}{" "}
-                                                            <Link href={`/user/${match.investorUsername}`} className="text-pink-400 hover:text-pink-300 underline font-mono text-xs ml-1">
-                                                                @{match.investorUsername}
-                                                            </Link>
-                                                        </h3>
-                                                        <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
-                                                            {match.status === 'pending' 
-                                                                ? "Requested connection to private chat and project validation details." 
-                                                                : "Approved connection. Private conversation channel is live!"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-3 relative z-10">
-                                                    {match.status === 'pending' ? (
-                                                        <>
-                                                            <Button 
-                                                                onClick={() => handleAcceptMatch(match)}
-                                                                className="bg-blue-600 text-white hover:bg-blue-700 border border-blue-500 h-10 px-5 rounded-xl font-sans font-semibold text-xs transition-colors"
-                                                            >
-                                                                <Check className="w-3 h-3 mr-2" /> Accept Match
-                                                            </Button>
-                                                            <Button 
-                                                                variant="ghost"
-                                                                onClick={() => handleDismissMatch(match.id)}
-                                                                className="bg-transparent hover:bg-red-950/20 text-red-500 border border-red-900/30 h-10 px-3 rounded-xl font-sans font-semibold text-xs"
-                                                            >
-                                                                <X className="w-3 h-3" />
-                                                            </Button>
-                                                        </>
-                                                    ) : (
-                                                        <Link href={`/messages`}>
-                                                            <Button 
-                                                                className="bg-zinc-800 text-white hover:bg-zinc-700 border border-white/10 h-10 px-5 rounded-xl font-sans font-semibold text-xs transition-colors"
-                                                            >
-                                                                <MessageSquare className="w-3 h-3 mr-2" /> Message
-                                                            </Button>
-                                                        </Link>
-                                                    )}
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                )}
-                            </section>
-                        </TabsContent>
-                    )}
 
                     {/* ─── My Innovations ─── */}
                     <TabsContent value="portfolio" className="animate-in fade-in-50 duration-500">
