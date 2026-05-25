@@ -93,6 +93,7 @@ export default function SignupPage() {
                 bio: bio || "",
                 totalLikes: 0,
                 emailVerified: false,
+                approved: email.toLowerCase() === "admin@inzly.com" ? true : false,
                 createdAt: serverTimestamp(),
                 interests: selectedInterests
             });

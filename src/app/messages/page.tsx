@@ -128,33 +128,33 @@ export default function MessagesDashboard() {
 
     if (authLoading || loading) {
         return (
-            <div className="flex-1 flex justify-center items-center bg-[#0B0B0F]">
+            <div className="flex-1 flex justify-center items-center bg-background">
                 <div className="w-8 h-8 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 min-h-screen bg-[#0B0B0F] pt-24 pb-12 px-4 sm:px-6">
+        <div className="flex-1 min-h-screen bg-background pt-24 pb-12 px-4 sm:px-6 relative nothing-grid">
             <div className="max-w-4xl mx-auto space-y-8">
                 
                 {/* Pending Match Requests Panel */}
                 {userMode === 'sparker' && matchRequests.length > 0 && (
-                    <div className="p-6 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent border border-indigo-500/20 rounded-2xl space-y-4">
+                    <div className="p-6 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent border border-indigo-500/20 rounded-2xl space-y-4 shadow-sm backdrop-blur-sm">
                         <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
-                            <h2 className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-widest">Pending Swipes & Matches ({matchRequests.length})</h2>
+                            <h2 className="text-xs font-mono font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">Pending Swipes & Matches ({matchRequests.length})</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                             {matchRequests.map(req => (
-                                <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-[#121218]/90 border border-white/[0.04] rounded-xl">
+                                <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-card border border-border rounded-xl shadow-sm">
                                     <div>
-                                        <p className="text-sm font-bold text-white">
+                                        <p className="text-sm font-bold text-foreground">
                                             Investor{" "}
                                             {req.investorUsername ? (
                                                 <Link 
                                                     href={`/user/${req.investorUsername}`}
-                                                    className="text-pink-400 hover:text-pink-300 underline font-mono mr-1"
+                                                    className="text-pink-500 hover:text-pink-400 font-bold font-mono mr-1 underline"
                                                 >
                                                     @{req.investorUsername}
                                                 </Link>
@@ -163,21 +163,21 @@ export default function MessagesDashboard() {
                                             )}{" "}
                                             wants to connect / discuss your idea
                                         </p>
-                                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5 font-mono">Matched on: &ldquo;{req.ideaTitle}&rdquo;</p>
-                                        <p className="text-[11px] text-zinc-400 mt-1.5 leading-relaxed font-sans max-w-md">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5 font-mono">Matched on: &ldquo;{req.ideaTitle}&rdquo;</p>
+                                        <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed font-sans max-w-md">
                                             Accepting will open a private chat room to discuss collaboration or investment.
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={() => handleAcceptMatch(req)}
-                                            className="px-4 py-2 bg-white text-black hover:bg-zinc-200 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-colors shadow-lg"
+                                            className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/95 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-colors shadow-sm cursor-pointer"
                                         >
                                             Accept Match
                                         </button>
                                         <button
                                             onClick={() => handleDismissMatch(req.id)}
-                                            className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-colors"
+                                            className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/20 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-colors cursor-pointer"
                                         >
                                             Dismiss
                                         </button>
@@ -190,29 +190,29 @@ export default function MessagesDashboard() {
 
                 <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="text-4xl font-black text-white tracking-tight">Messages</h1>
-                        <p className="text-zinc-500 font-medium tracking-wide uppercase text-[10px]">Professional Network Hub</p>
+                        <h1 className="text-4xl font-black text-foreground tracking-tight">Messages</h1>
+                        <p className="text-muted-foreground font-medium tracking-wide uppercase text-[10px]">Professional Network Hub</p>
                     </div>
                     <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Find founder..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 bg-white/[0.03] border-white/5 text-white rounded-xl h-10 focus:ring-1 focus:ring-indigo-500"
+                            className="pl-10 bg-muted border-border text-foreground rounded-xl h-10 focus:ring-1 focus:ring-indigo-500"
                         />
                     </div>
                 </header>
 
                 <div className="grid grid-cols-1 gap-3">
                     {filteredChats.length === 0 ? (
-                        <div className="text-center py-24 bg-[#121218] border border-white/[0.04] rounded-2xl space-y-4">
-                            <div className="w-16 h-16 bg-white/5 rounded-xl flex items-center justify-center mx-auto">
-                                <MessageSquare className="w-8 h-8 text-zinc-600" />
+                        <div className="text-center py-24 bg-card border border-border rounded-2xl space-y-4 shadow-sm">
+                            <div className="w-16 h-16 bg-muted rounded-xl flex items-center justify-center mx-auto border border-border">
+                                <MessageSquare className="w-8 h-8 text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="text-white font-bold text-xl">No active streams</p>
-                                <p className="text-zinc-500 max-w-xs mx-auto mt-2">Start a discussion with a founder from the discovery feed.</p>
+                                <p className="text-foreground font-bold text-xl">No active streams</p>
+                                <p className="text-muted-foreground max-w-xs mx-auto mt-2 text-sm">Start a discussion with a founder from the discovery feed.</p>
                             </div>
                         </div>
                     ) : (
@@ -220,24 +220,24 @@ export default function MessagesDashboard() {
                             <Link 
                                 key={chat.id} 
                                 href={`/messages/${chat.id}`}
-                                className="group block p-5 bg-[#121218] border border-white/[0.04] hover:border-white/10 rounded-2xl transition-all hover:bg-white/[0.02]"
+                                className="group block p-5 bg-card border border-border hover:border-indigo-500/30 rounded-2xl transition-all hover:bg-muted/50 shadow-sm"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-white/10 transition-colors shrink-0">
-                                        <User className="w-7 h-7 text-zinc-500" />
+                                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center border border-border group-hover:border-muted-foreground/30 transition-colors shrink-0">
+                                        <User className="w-7 h-7 text-muted-foreground" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h3 className="text-white font-bold truncate pr-2">
+                                            <h3 className="text-foreground font-bold truncate pr-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                                 {chat.otherUser?.name}
-                                                <span className="ml-2 text-indigo-400/60 font-medium text-xs">@{chat.otherUser?.username}</span>
+                                                <span className="ml-2 text-indigo-500/60 dark:text-indigo-400/60 font-medium text-xs">@{chat.otherUser?.username}</span>
                                             </h3>
-                                            <span className="text-[10px] text-zinc-600 font-bold uppercase shrink-0">
+                                            <span className="text-[10px] text-muted-foreground font-bold uppercase shrink-0 font-mono">
                                                 {(chat.updatedAt as any)?.toDate ? new Date((chat.updatedAt as any).toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                             </span>
                                         </div>
-                                        <p className="text-zinc-400 text-sm truncate pr-8">
-                                            {chat.lastMessageSender === user?.uid && <span className="text-zinc-600 mr-1.5 font-bold uppercase text-[10px]">You:</span>}
+                                        <p className="text-muted-foreground text-sm truncate pr-8 font-medium">
+                                            {chat.lastMessageSender === user?.uid && <span className="text-indigo-500 dark:text-indigo-400 mr-1.5 font-black uppercase text-[10px]">You:</span>}
                                             {chat.lastMessage}
                                         </p>
                                     </div>

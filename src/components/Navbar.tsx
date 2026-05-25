@@ -8,7 +8,7 @@ import GlobalSearch from "./GlobalSearch";
 import { 
     Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, 
     Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard,
-    Sparkles
+    Sparkles, ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -193,6 +193,14 @@ export default function Navbar() {
                                                         Profile
                                                     </button>
                                                 </Link>
+                                                {(user?.email?.toLowerCase() === "admin@inzly.com" || userData?.isAdmin === true) && (
+                                                    <Link href="/admin" onClick={() => setProfileMenuOpen(false)}>
+                                                        <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-indigo-500 hover:text-indigo-400 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-500/5 rounded-xl transition-colors text-left font-bold">
+                                                            <ShieldCheck className="w-4 h-4" />
+                                                            Admin Console
+                                                        </button>
+                                                    </Link>
+                                                )}
                                                 <Link href="/settings" onClick={() => setProfileMenuOpen(false)}>
                                                     <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors text-left">
                                                         <Settings className="w-4 h-4" />

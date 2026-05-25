@@ -26,6 +26,7 @@ const SWIPE_THRESHOLD = 50;
 export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
     const [showGate, setShowGate] = useState(false);
     const [gateMessage, setGateMessage] = useState("");
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const x = useMotionValue(0);
     const rotate = useTransform(x, [-300, 0, 300], [-8, 0, 8]);
@@ -213,8 +214,24 @@ export default function PreviewSwipeCard({ idea }: PreviewSwipeCardProps) {
                         {idea.title}
                     </h2>
 
-                    <div>
-                        <p className="text-zinc-400 font-sans text-sm sm:text-base leading-relaxed line-clamp-6">{idea.idea}</p>
+                    <div className="relative">
+                        <p className={`text-zinc-400 font-sans text-sm sm:text-base leading-relaxed transition-all duration-300 ${isExpanded ? "" : "line-clamp-6"}`}>
+                            {idea.idea}
+                        </p>
+                        {idea.idea.length > 240 && (
+                            <div className={`flex justify-start ${isExpanded ? "pt-1" : "absolute bottom-0 left-0 right-0 pt-8 bg-gradient-to-t from-card via-card/90 to-transparent"}`}>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsExpanded(!isExpanded);
+                                    }}
+                                    className="text-pink-500 hover:text-pink-400 font-mono text-[10px] font-black uppercase tracking-widest bg-card px-2 py-0.5 rounded border border-pink-500/20 hover:bg-pink-500/5 transition-all shadow-sm cursor-pointer z-30"
+                                >
+                                    {isExpanded ? "Read Less" : "Read More"}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

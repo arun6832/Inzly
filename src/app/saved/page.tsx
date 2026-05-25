@@ -127,15 +127,15 @@ export default function SavedIdeasPage() {
 
                     {userData && (
                         <div className="flex items-center space-x-4 bg-card border border-border p-4 rounded-2xl">
-                            <div className="flex items-center text-zinc-300">
-                                <User className="w-5 h-5 mr-2 text-blue-400" />
+                            <div className="flex items-center text-foreground">
+                                <User className="w-5 h-5 mr-2 text-blue-500" />
                                 <span className="font-semibold">{userData.name || "User"}</span>
                             </div>
-                            <div className="w-px h-6 bg-white/[0.1]"></div>
-                            <div className="flex items-center text-zinc-300">
+                            <div className="w-px h-6 bg-border"></div>
+                            <div className="flex items-center text-foreground">
                                 <Heart className="w-5 h-5 mr-2 text-red-500 fill-current" />
                                 <span className="font-bold">{userData.totalLikes || 0}</span>
-                                <span className="ml-1 text-sm text-zinc-500">Total Likes</span>
+                                <span className="ml-1 text-sm text-muted-foreground">Total Likes</span>
                             </div>
                         </div>
                     )}
@@ -152,20 +152,20 @@ export default function SavedIdeasPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {savedIdeas.map((idea) => (
-                            <div key={idea.id} className="bg-card border border-border rounded-2xl p-6 hover:border-blue-500/30 transition-colors flex flex-col items-start text-left h-full shadow-lg relative overflow-hidden group">
+                            <div key={idea.id} className="bg-card border border-border rounded-2xl p-6 hover:border-indigo-500/30 transition-colors flex flex-col items-start text-left h-full shadow-lg relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors pointer-events-none"></div>
-                                <span className="px-3 py-1 rounded-lg text-[10px] uppercase tracking-wider font-bold bg-white/[0.05] text-white/70 mb-5 relative z-10">
+                                <span className="px-3 py-1 rounded-lg text-[10px] uppercase tracking-wider font-bold bg-muted text-muted-foreground mb-5 relative z-10 border border-border">
                                     {idea.category}
                                 </span>
                                 <h3 className="text-xl font-bold font-dot tracking-tight text-foreground mb-3 line-clamp-2 leading-tight relative z-10">
                                     {idea.title}
                                 </h3>
-                                <p className="text-zinc-400 line-clamp-3 mb-6 flex-1 text-sm leading-relaxed relative z-10">
+                                <p className="text-muted-foreground line-clamp-3 mb-6 flex-1 text-sm leading-relaxed relative z-10">
                                     {idea.problem}
                                 </p>
-                                <div className="w-full mt-auto pt-4 border-t border-white/[0.04] relative z-10 flex items-center gap-2">
+                                <div className="w-full mt-auto pt-4 border-t border-border relative z-10 flex items-center gap-2">
                                     <Link href={`/idea/${idea.id}`} className="flex-1">
-                                        <Button variant="ghost" className="w-full h-12 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] justify-center text-white font-semibold transition-all group">
+                                        <Button variant="ghost" className="w-full h-12 rounded-xl bg-muted hover:bg-accent justify-center text-foreground font-semibold transition-all group">
                                             Read More
                                         </Button>
                                     </Link>
@@ -174,7 +174,7 @@ export default function SavedIdeasPage() {
                                             onClick={(e) => handleMessage(e, idea)}
                                             variant="ghost" 
                                             size="icon"
-                                            className="w-12 h-12 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 hover:text-white"
+                                            className="w-12 h-12 rounded-xl bg-muted hover:bg-accent text-muted-foreground hover:text-foreground"
                                         >
                                             <MessageSquare className="w-5 h-5" />
                                         </Button>
