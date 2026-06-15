@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Inzly | Idea Discovery",
@@ -22,10 +16,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="antialiased dark hide-scrollbar" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-indigo-500/30 hide-scrollbar`} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-white/15 selection:text-white hide-scrollbar nothing-grid relative" suppressHydrationWarning>
+        {/* Ambient Top Glow Pattern */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] pointer-events-none z-0 nothing-radial-glow opacity-60" />
+        
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full relative flex flex-col">
+          <main className="flex-1 w-full relative flex flex-col z-10">
             {children}
           </main>
           <Footer />
@@ -34,3 +31,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -105,8 +105,7 @@ export const subscribeToMessages = (chatId: string, callback: (msgs: Message[]) 
 export const subscribeToChats = (uid: string, callback: (chats: Chat[]) => void) => {
     const q = query(
         collection(db, "chats"),
-        where("participants", "array-contains", uid),
-        orderBy("updatedAt", "desc")
+        where("participants", "array-contains", uid)
     );
 
     return onSnapshot(q, async (snap) => {

@@ -12,12 +12,13 @@ import {
     doc,
     getDoc,
     limit,
-    Timestamp 
+    Timestamp,
+    updateDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, User, ShieldCheck } from "lucide-react";
+import { Send, ArrowLeft, User, ShieldCheck, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -35,7 +36,7 @@ interface Chat {
 
 export default function ChatPage() {
     const params = useParams() as { chatId: string };
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -43,10 +44,22 @@ export default function ChatPage() {
     const [newMessage, setNewMessage] = useState("");
     const [otherUser, setOtherUser] = useState<Record<string, unknown> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
+    const [isMatchedOrCollab, setIsMatchedOrCollab] = useState<boolean | null>(null);
+
+    const isTypingLocal = useRef(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Redirect to login if unauthenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push("/login");
+        }
+    }, [user, authLoading, router]);
 
     // 1. Fetch Chat Info & Other User
     useEffect(() => {
-        if (!user || !params.chatId) return;
+        if (authLoading || !user || !params.chatId) return;
 
         const fetchChat = async () => {
             try {
@@ -55,13 +68,66 @@ export default function ChatPage() {
 
                 if (chatSnap.exists()) {
                     const chatData = chatSnap.data() as Chat;
-                    const otherUserId = chatData.participants.find(p => p !== user.uid);
+                    const otherUserId = chatData.participants?.find(p => p !== user.uid);
                     
                     if (otherUserId) {
                         const userRef = doc(db, "users", otherUserId);
                         const userSnap = await getDoc(userRef);
                         if (userSnap.exists()) {
                             setOtherUser({ id: userSnap.id, ...userSnap.data() });
+
+                            // Access check rule
+                            if (otherUserId === user.uid) {
+                                setIsMatchedOrCollab(true);
+                            } else {
+                                const { getDocs, query, collection, where } = await import("firebase/firestore");
+                                
+                                // 1. Check approved collaborations specifically between these two users (Builder + Thinker)
+                                const collabQ1 = query(
+                                    collection(db, "collaborationRequests"),
+                                    where("status", "==", "approved"),
+                                    where("requesterId", "==", user.uid),
+                                    where("creatorId", "==", otherUserId)
+                                );
+                                const collabSnap1 = await getDocs(collabQ1);
+                                let allowed = !collabSnap1.empty;
+
+                                if (!allowed) {
+                                    const collabQ2 = query(
+                                        collection(db, "collaborationRequests"),
+                                        where("status", "==", "approved"),
+                                        where("requesterId", "==", otherUserId),
+                                        where("creatorId", "==", user.uid)
+                                    );
+                                    const collabSnap2 = await getDocs(collabQ2);
+                                    allowed = !collabSnap2.empty;
+                                }
+
+                                // 2. Check approved matches specifically between these two users (Investor + Thinker)
+                                if (!allowed) {
+                                    const matchQ1 = query(
+                                        collection(db, "matches"),
+                                        where("status", "==", "approved"),
+                                        where("investorId", "==", user.uid),
+                                        where("thinkerId", "==", otherUserId)
+                                    );
+                                    const matchSnap1 = await getDocs(matchQ1);
+                                    allowed = !matchSnap1.empty;
+
+                                    if (!allowed) {
+                                        const matchQ2 = query(
+                                            collection(db, "matches"),
+                                            where("status", "==", "approved"),
+                                            where("investorId", "==", otherUserId),
+                                            where("thinkerId", "==", user.uid)
+                                        );
+                                        const matchSnap2 = await getDocs(matchQ2);
+                                        allowed = !matchSnap2.empty;
+                                    }
+                                }
+
+                                setIsMatchedOrCollab(allowed);
+                            }
                         }
                     }
                 }
@@ -73,7 +139,7 @@ export default function ChatPage() {
         };
 
         fetchChat();
-    }, [user, params.chatId]);
+    }, [user, authLoading, params.chatId]);
 
     // 2. Subscribe to Messages
     useEffect(() => {
@@ -97,12 +163,56 @@ export default function ChatPage() {
         return () => unsubscribe();
     }, [params.chatId]);
 
+    // 3. Listen for Typing Status
+    useEffect(() => {
+        if (!params.chatId || !otherUser) return;
+        
+        const chatRef = doc(db, "chats", params.chatId);
+        const unsubscribe = onSnapshot(chatRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.typing && data.typing[otherUser.id as string]) {
+                    setIsOtherTyping(true);
+                    setTimeout(() => {
+                        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+                    }, 50);
+                } else {
+                    setIsOtherTyping(false);
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, [params.chatId, otherUser]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+
+        if (!user || !params.chatId) return;
+
+        const chatRef = doc(db, "chats", params.chatId);
+
+        if (!isTypingLocal.current) {
+            isTypingLocal.current = true;
+            updateDoc(chatRef, { [`typing.${user.uid}`]: true }).catch(console.error);
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            isTypingLocal.current = false;
+            updateDoc(chatRef, { [`typing.${user.uid}`]: false }).catch(console.error);
+        }, 2000);
+    };
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !user || !params.chatId) return;
 
         const text = newMessage;
         setNewMessage("");
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        isTypingLocal.current = false;
 
         try {
             const messagesRef = collection(db, "chats", params.chatId, "messages");
@@ -113,46 +223,46 @@ export default function ChatPage() {
             });
 
             // Update chat meta
-            const { updateDoc } = await import("firebase/firestore");
             const chatRef = doc(db, "chats", params.chatId);
             await updateDoc(chatRef, {
                 lastMessage: text,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                [`typing.${user.uid}`]: false
             });
         } catch (err) {
             console.error("Message send failed", err);
         }
     };
 
-    if (loading) {
+    if (authLoading || loading) {
         return (
-            <div className="flex-1 flex justify-center items-center bg-[#050507]">
+            <div className="flex-1 flex justify-center items-center bg-background">
                 <div className="w-6 h-6 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 flex flex-col bg-[#050507] h-[calc(100vh-64px)] relative overflow-hidden">
+        <div className="flex-1 flex flex-col bg-background h-[calc(100vh-64px)] relative overflow-hidden">
             {/* Thread Header */}
-            <header className="h-16 flex items-center justify-between px-6 bg-[#0B0B0F]/80 backdrop-blur-3xl border-b border-white/[0.04] z-20">
+            <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border z-20 shadow-sm">
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => router.push('/messages')}
-                        className="p-2 -ml-2 text-zinc-500 hover:text-white transition-colors"
+                        className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                            <User className="w-4 h-4 text-zinc-400" />
+                        <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center">
+                            <User className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-black text-white px-2 leading-none flex items-center gap-1.5 uppercase tracking-wider">
+                            <h3 className="text-sm font-black text-foreground px-2 leading-none flex items-center gap-1.5 uppercase tracking-wider">
                                 {(otherUser?.name as string) || "Builder"}
-                                <ShieldCheck className="w-3 h-3 text-indigo-400" />
+                                <ShieldCheck className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
                             </h3>
-                            <p className="text-[10px] text-zinc-600 font-bold px-2 uppercase tracking-widest mt-0.5">
+                            <p className="text-[10px] text-muted-foreground font-bold px-2 uppercase tracking-widest mt-0.5 font-mono">
                                 Verified Network Member
                             </p>
                         </div>
@@ -160,54 +270,99 @@ export default function ChatPage() {
                 </div>
             </header>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
-                <AnimatePresence initial={false}>
-                    {messages.map((msg) => (
-                        <motion.div 
-                            key={msg.id}
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            className={`flex ${msg.senderId === user?.uid ? "justify-end" : "justify-start"}`}
-                        >
-                            <div className={`max-w-[75%] px-4 py-3 rounded-[20px] text-sm font-medium leading-relaxed ${
-                                msg.senderId === user?.uid 
-                                    ? "bg-white text-black rounded-tr-none shadow-xl" 
-                                    : "bg-[#121218] text-zinc-300 border border-white/[0.04] rounded-tl-none"
-                            }`}>
-                                {msg.text}
-                            </div>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-                <div ref={scrollRef} />
-            </div>
-
-            {/* Input Bar */}
-            <div className="p-4 bg-[#050507] border-t border-white/[0.04]">
-                <form 
-                    onSubmit={handleSendMessage}
-                    className="max-w-4xl mx-auto flex gap-3"
-                >
-                    <input 
-                        type="text" 
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Discuss project or investment..."
-                        className="flex-1 bg-[#121218] border border-white/[0.08] rounded-2xl px-6 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner"
-                    />
-                    <Button 
-                        type="submit"
-                        disabled={!newMessage.trim()}
-                        className="bg-white text-black hover:bg-zinc-200 rounded-2xl px-6 h-14 font-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
-                    >
-                        <Send className="w-5 h-5" />
+            {isMatchedOrCollab === false ? (
+                <div className="flex-1 flex flex-col items-center justify-center bg-background p-8 text-center relative z-20 overflow-hidden font-sans nothing-grid">
+                    <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-xl h-[300px] nothing-radial-glow opacity-30" />
+                    </div>
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 relative z-10 shadow-2xl">
+                        <Lock className="w-6 h-6 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+                    </div>
+                    <h2 className="text-xl font-bold font-dot uppercase tracking-widest text-foreground mb-2 relative z-10">Secure Sector Locked</h2>
+                    <p className="text-xs text-muted-foreground max-w-sm mb-6 uppercase tracking-wider leading-relaxed relative z-10 font-mono">
+                        Direct communications require a mutual swiped match (Investor + Thinker) or approved project collaboration (Builder + Thinker).
+                    </p>
+                    <Button onClick={() => router.push("/messages")} className="bg-primary text-primary-foreground hover:bg-primary/95 border border-border rounded-xl px-6 h-11 font-mono uppercase tracking-widest text-[10px] font-bold relative z-10 shadow-lg cursor-pointer">
+                        Return to Inbox
                     </Button>
-                </form>
-                <p className="text-center text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em] mt-3 py-1">
-                    Encrypted Industrial Communication Pipeline
-                </p>
-            </div>
+                </div>
+            ) : (
+                <>
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+                        <AnimatePresence initial={false}>
+                            {messages.map((msg) => (
+                                <motion.div 
+                                    key={msg.id}
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    className={`flex ${msg.senderId === user?.uid ? "justify-end" : "justify-start"}`}
+                                >
+                                    <div className={`max-w-[75%] px-4 py-3 rounded-[20px] text-sm font-medium leading-relaxed shadow-sm ${
+                                        msg.senderId === user?.uid 
+                                            ? "bg-primary text-primary-foreground rounded-tr-none" 
+                                            : "bg-card text-foreground border border-border rounded-tl-none"
+                                    }`}>
+                                        {msg.text}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        
+                        <AnimatePresence>
+                            {isOtherTyping && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="flex justify-start"
+                                >
+                                    <div className="bg-card text-foreground border border-border rounded-[20px] rounded-tl-none px-4 py-3 flex items-center gap-1.5 h-[44px] shadow-sm">
+                                        <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                                        <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }} />
+                                        <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ y: [0, -3, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }} />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div ref={scrollRef} />
+                    </div>
+
+                    {/* Input Bar */}
+                    <div className="p-4 bg-background border-t border-border">
+                        <form 
+                            onSubmit={handleSendMessage}
+                            className="max-w-4xl mx-auto relative flex items-center"
+                        >
+                            <input 
+                                type="text" 
+                                value={newMessage}
+                                onChange={handleInputChange}
+                                placeholder="Discuss project or investment..."
+                                className="w-full bg-card border border-border rounded-2xl pl-6 pr-16 py-4 text-foreground text-sm focus:outline-none focus:border-indigo-500 transition-all shadow-sm placeholder-muted-foreground"
+                            />
+                            <AnimatePresence>
+                                {newMessage.trim() && (
+                                    <motion.button 
+                                        initial={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, rotate: -20 }}
+                                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                        type="submit"
+                                        className="absolute right-2 bg-primary text-primary-foreground hover:bg-primary/95 rounded-xl w-10 h-10 flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/10 cursor-pointer"
+                                    >
+                                        <Send className="w-4 h-4 ml-0.5" />
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
+                        </form>
+                        <p className="text-center text-[9px] text-muted-foreground font-bold uppercase tracking-[0.3em] mt-3 py-1">
+                            Encrypted Industrial Communication Pipeline
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

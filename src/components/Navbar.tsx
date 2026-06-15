@@ -7,7 +7,8 @@ import { Button } from "./ui/button";
 import GlobalSearch from "./GlobalSearch";
 import { 
     Menu, X, Rocket, MessageSquare, Heart, Trophy, LogOut, 
-    Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard
+    Search, UserCircle2, MapPin, ChevronDown, User, Settings, LayoutDashboard,
+    Sparkles, ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,6 +41,40 @@ export default function Navbar() {
 
     const closeMenu = () => setMobileMenuOpen(false);
 
+    // Fetch pending likes count for badge
+    const [likesCount, setLikesCount] = useState(0);
+
+    useEffect(() => {
+        if (!user || (userMode !== 'sparker' && userMode !== 'builder')) {
+            setLikesCount(0);
+            return;
+        }
+
+        let unsubscribe = () => {};
+
+        const fetchBadgeCount = async () => {
+            try {
+                const { collection, query, where, onSnapshot } = await import("firebase/firestore");
+                const { db } = await import("@/lib/firebase");
+                
+                const q = query(
+                    collection(db, "matches"),
+                    where("thinkerId", "==", user.uid),
+                    where("status", "==", "pending")
+                );
+
+                unsubscribe = onSnapshot(q, (snap) => {
+                    setLikesCount(snap.size);
+                });
+            } catch (err) {
+                console.error("Failed to subscribe to likes count badge", err);
+            }
+        };
+
+        fetchBadgeCount();
+        return () => unsubscribe();
+    }, [user, userMode]);
+
     const initials = userData?.name
         ? userData.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
         : (userData?.username?.[0] || "?").toUpperCase();
@@ -48,6 +83,9 @@ export default function Navbar() {
 
     const navLinks = [
         { href: "/dashboard", label: "Studio", icon: LayoutDashboard },
+        ...(user && (userMode === 'sparker' || userMode === 'builder') ? [
+            { href: "/likes", label: "Likes", icon: Sparkles, badge: likesCount }
+        ] : []),
         { href: "/map", label: "Map", icon: MapPin },
         { href: "/leaderboard", label: "Rank", icon: Trophy },
         { href: "/messages", label: "Chats", icon: MessageSquare },
@@ -55,37 +93,38 @@ export default function Navbar() {
     ];
 
     return (
-        <nav className={`w-full sticky top-0 z-[100] transition-all duration-500 ${
+        <nav className={`w-full sticky top-0 z-[100] transition-all duration-300 ${
             isScrolled 
-                ? "bg-[#050507]/90 backdrop-blur-2xl border-b border-white/[0.05] py-2" 
-                : "bg-transparent py-4"
+                ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-[0_1px_0_0_rgba(59,130,246,0.08)] py-1.5" 
+                : "bg-transparent py-3"
         }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-12 sm:h-14">
+                <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? "h-10" : "h-12 sm:h-14"}`}>
                     
                     {/* --- LEFT: Logo --- */}
-                    <Link href="/" className="flex items-center gap-3 group shrink-0" onClick={closeMenu}>
-                        <div className="relative">
-                            <img 
-                                src="/images/inzly-logo.png" 
-                                alt="Inzly" 
-                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover ring-1 ring-white/10 group-hover:scale-105 transition-all duration-300" 
-                            />
-                            <div className="absolute inset-0 bg-indigo-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Link href="/" className="flex items-center gap-2 group shrink-0" onClick={closeMenu}>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`rounded-full bg-blue-500 animate-blue-pulse shadow-[0_0_6px_rgba(59,130,246,0.8)] shrink-0 transition-all duration-300 ${isScrolled ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+                            <span className={`rounded-full bg-red-600 animate-red-pulse shadow-[0_0_6px_rgba(239,68,68,0.8)] shrink-0 transition-all duration-300 ${isScrolled ? "w-1.5 h-1.5" : "w-2 h-2"}`} />
+                            <span className={`font-black font-dot tracking-tight text-white pl-1 transition-all duration-300 ${isScrolled ? "text-base" : "text-xl"}`}>
+                                Inzly.
+                            </span>
                         </div>
-                        <span className="hidden sm:block text-xl font-black tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-                            inzly
-                        </span>
                     </Link>
 
                     {/* --- CENTER: Navigation Dock (Desktop) --- */}
                     {user && (
-                        <div className="hidden lg:flex items-center px-1.5 py-1 bg-white/[0.03] border border-white/[0.06] rounded-full backdrop-blur-md">
+                        <div className={`hidden lg:flex items-center bg-card border border-border rounded-full shadow-lg transition-all duration-300 ${isScrolled ? "px-1 py-0.5" : "px-1.5 py-1"}`}>
                             {navLinks.map((link) => (
                                 <Link key={link.href} href={link.href}>
-                                    <button className="flex items-center gap-2 px-4 py-2 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-all group">
-                                        <link.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">{link.label}</span>
+                                    <button className={`relative flex items-center gap-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/5 transition-all group font-sans font-medium ${isScrolled ? "px-3 py-1.5 text-[11px]" : "px-4 py-2 text-xs"}`}>
+                                        <link.icon className={`group-hover:scale-105 transition-all duration-300 ${isScrolled ? "w-3 h-3" : "w-3.5 h-3.5"}`} />
+                                        <span>{link.label}</span>
+                                        {link.badge !== undefined && link.badge > 0 && (
+                                            <span className="absolute -top-1.5 -right-1 bg-red-500 text-white font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse">
+                                                {link.badge}
+                                            </span>
+                                        )}
                                     </button>
                                 </Link>
                             ))}
@@ -106,26 +145,30 @@ export default function Navbar() {
                         {user ? (
                             <div className="flex items-center gap-2">
                                 {/* Post Idea (Desktop) */}
-                                <Link href="/create" className="hidden sm:block">
-                                    <Button className="bg-white text-black hover:bg-zinc-200 rounded-full px-5 h-9 lg:h-10 text-xs font-bold shadow-lg shadow-white/5 transition-all hover:scale-[1.03]">
-                                        Post Idea
-                                    </Button>
-                                </Link>
+                                {userMode !== 'explorer' && (
+                                    <Link href="/create" className="hidden sm:block">
+                                        <Button className="bg-white text-black hover:bg-white/90 border border-white rounded-xl px-5 h-9 text-xs font-mono uppercase tracking-widest font-bold transition-all shadow-md">
+                                            Post Idea
+                                        </Button>
+                                    </Link>
+                                )}
 
                                 {/* Post Idea (Mobile Icon) */}
-                                <Link href="/create" className="sm:hidden" onClick={closeMenu}>
-                                    <Button size="icon" className="bg-white text-black rounded-lg w-9 h-9">
-                                        <Rocket className="w-4 h-4" />
-                                    </Button>
-                                </Link>
+                                {userMode !== 'explorer' && (
+                                    <Link href="/create" className="sm:hidden" onClick={closeMenu}>
+                                        <Button size="icon" className="bg-white text-black rounded-xl w-9 h-9 border border-white">
+                                            <Rocket className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
+                                )}
 
                                 {/* User Profile Dropdown */}
                                 <div className="relative" ref={profileRef}>
                                     <button 
                                         onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                                        className="flex items-center gap-2 p-1 pl-1 bg-white/[0.03] border border-white/[0.06] rounded-full hover:bg-white/[0.08] transition-all group"
+                                        className="flex items-center gap-2 p-0.5 bg-background border border-border rounded-xl hover:bg-white/5 transition-all group"
                                     >
-                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-black text-white shadow-inner">
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white text-black flex items-center justify-center text-[10px] font-mono font-bold border border-white">
                                             {initials}
                                         </div>
                                         <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 group-hover:text-white transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
@@ -135,30 +178,38 @@ export default function Navbar() {
                                     <AnimatePresence>
                                         {profileMenuOpen && (
                                             <motion.div
-                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                initial={{ opacity: 0, y: 10, scale: 0.98 }}
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                className="absolute right-0 mt-2 w-48 bg-[#0B0B0F]/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden py-1 z-[110]"
+                                                exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                                                className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden py-1 z-[110]"
                                             >
-                                                <div className="px-4 py-3 border-b border-white/5 mb-1">
-                                                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-0.5">Signed in as</p>
+                                                <div className="px-4 py-3 border-b border-border mb-1 font-mono">
+                                                    <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Signed in as</p>
                                                     <p className="text-xs font-bold text-white truncate">@{userData?.username || 'user'}</p>
                                                 </div>
                                                 <Link href={`/user/${userData?.username || user?.uid}`} onClick={() => setProfileMenuOpen(false)}>
-                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors text-left">
                                                         <User className="w-4 h-4" />
                                                         Profile
                                                     </button>
                                                 </Link>
+                                                {(user?.email?.toLowerCase() === "admin@inzly.com" || userData?.isAdmin === true) && (
+                                                    <Link href="/admin" onClick={() => setProfileMenuOpen(false)}>
+                                                        <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-indigo-500 hover:text-indigo-400 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-500/5 rounded-xl transition-colors text-left font-bold">
+                                                            <ShieldCheck className="w-4 h-4" />
+                                                            Admin Console
+                                                        </button>
+                                                    </Link>
+                                                )}
                                                 <Link href="/settings" onClick={() => setProfileMenuOpen(false)}>
-                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-colors">
+                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors text-left">
                                                         <Settings className="w-4 h-4" />
                                                         Settings
                                                     </button>
                                                 </Link>
                                                 <button 
                                                     onClick={() => { signOut(); setProfileMenuOpen(false); }}
-                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-400/80 hover:text-red-400 hover:bg-red-500/5 transition-colors mt-1 border-t border-white/5"
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-widest text-red-500 hover:text-red-400 hover:bg-red-500/5 transition-colors mt-1 border-t border-border text-left"
                                                 >
                                                     <LogOut className="w-4 h-4" />
                                                     Log Out
@@ -169,14 +220,14 @@ export default function Navbar() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 font-mono uppercase tracking-widest text-[10px]">
                                 <Link href="/login" className="hidden sm:block">
-                                    <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-full px-4 h-9 text-xs font-bold">
+                                    <Button variant="ghost" className="text-zinc-400 hover:text-white rounded-xl px-4 h-9 font-bold">
                                         Log In
                                     </Button>
                                 </Link>
                                 <Link href="/signup">
-                                    <Button className="bg-white text-black hover:bg-zinc-100 rounded-full px-5 h-9 text-xs font-bold transition-all">
+                                    <Button className="bg-white text-black hover:bg-white/90 border border-white rounded-xl px-5 h-9 font-bold transition-all shadow-md">
                                         Join
                                     </Button>
                                 </Link>
@@ -187,7 +238,7 @@ export default function Navbar() {
                         <div className="lg:hidden">
                             <button 
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.06] text-zinc-400"
+                                className="w-9 h-9 flex items-center justify-center rounded-none bg-white/[0.03] border border-white/[0.06] text-zinc-400"
                             >
                                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                             </button>
@@ -209,9 +260,14 @@ export default function Navbar() {
                             <div className="grid grid-cols-2 gap-3">
                                 {navLinks.map((link) => (
                                     <Link key={link.href} href={link.href} onClick={closeMenu}>
-                                        <div className="flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.05] text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-all">
+                                        <div className="relative flex flex-col items-center justify-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.05] text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-all">
                                             <link.icon className="w-5 h-5 mb-2" />
                                             <span className="text-[10px] font-black uppercase tracking-widest">{link.label}</span>
+                                            {link.badge !== undefined && link.badge > 0 && (
+                                                <span className="absolute top-2 right-2 bg-red-500 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse">
+                                                    {link.badge}
+                                                </span>
+                                            )}
                                         </div>
                                     </Link>
                                 ))}

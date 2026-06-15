@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { 
     ChevronLeft, Share2, BookmarkPlus, 
-    Lock, Eye, ShieldCheck, Flag, MessageSquare, Sparkles 
+    Lock, Eye, ShieldCheck, Flag, MessageSquare, Sparkles, Heart 
 } from "lucide-react";
 import { Github } from "@/components/icons";
 import { useAuth } from "@/lib/AuthContext";
@@ -32,12 +32,13 @@ interface Idea {
     executionStatus?: ExecutionStatus;
     currentVersion?: number;
     visibility?: "public" | "restricted" | "investor";
+    tags?: string[];
 }
 
 export default function IdeaDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, userMode, userData } = useAuth();
 
     const [ideaData, setIdeaData] = useState<Idea | null>(null);
     const [linkedProblem, setLinkedProblem] = useState<Problem | null>(null);
@@ -125,6 +126,34 @@ export default function IdeaDetailPage() {
         }
     }, [ideaId]);
 
+    const [matchedStatus, setMatchedStatus] = useState<'none' | 'pending' | 'approved'>('none');
+    const [isInvestorRole, setIsInvestorRole] = useState(false);
+    const [requestingMatch, setRequestingMatch] = useState(false);
+
+    const handleRequestMatch = async () => {
+        if (!user || !ideaData || requestingMatch) return;
+        setRequestingMatch(true);
+        try {
+            const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+            await addDoc(collection(db, "matches"), {
+                investorId: user.uid,
+                investorName: userData?.name || user.displayName || "Investor",
+                investorUsername: userData?.username || "unknown",
+                thinkerId: ideaData.userId,
+                ideaId,
+                ideaTitle: ideaData.title,
+                status: "pending",
+                createdAt: serverTimestamp()
+            });
+            setMatchedStatus('pending');
+            alert("Match request submitted to the Thinker!");
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRequestingMatch(false);
+        }
+    };
+
     // Check interaction & join status
     useEffect(() => {
         if (!user || !ideaId) return;
@@ -132,6 +161,21 @@ export default function IdeaDetailPage() {
         const checkStatus = async () => {
             const { query, collection, where, getDocs } = await import("firebase/firestore");
             try {
+                setIsInvestorRole(userMode === 'catalyst');
+
+                // Check match status
+                const matchQ = query(collection(db, "matches"), where("investorId", "==", user.uid), where("ideaId", "==", ideaId));
+                const matchSnap = await getDocs(matchQ);
+                if (!matchSnap.empty) {
+                    setMatchedStatus(matchSnap.docs[0].data().status as any);
+                } else {
+                    // Check approved collaboration as matching fallback
+                    const collabQ = query(collection(db, "collaborationRequests"), where("requesterId", "==", user.uid), where("ideaId", "==", ideaId));
+                    const collabSnap = await getDocs(collabQ);
+                    if (!collabSnap.empty && collabSnap.docs[0].data().status === 'approved') {
+                        setMatchedStatus('approved');
+                    }
+                }
                 const savedQ = query(collection(db, "savedIdeas"), where("userId", "==", user.uid), where("ideaId", "==", ideaId));
                 const savedSnap = await getDocs(savedQ);
                 if (!savedSnap.empty) setHasSaved(true);
@@ -305,7 +349,7 @@ export default function IdeaDetailPage() {
                     <Button
                         variant="ghost"
                         onClick={() => router.back()}
-                        className="text-zinc-500 hover:text-white rounded-full hover:bg-white/5 -ml-4 font-black uppercase tracking-[0.2em] text-[10px]"
+                        className="text-zinc-500 hover:text-white rounded-xl hover:bg-white/5 -ml-4 font-black uppercase tracking-[0.2em] text-[10px]"
                     >
                         <ChevronLeft className="w-4 h-4 mr-2" />
                         Back to Stream
@@ -317,7 +361,7 @@ export default function IdeaDetailPage() {
                             size="icon" 
                             onClick={handleSave}
                             disabled={hasSaved}
-                            className={`w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.05] transition-all ${hasSaved ? 'text-indigo-400 border-indigo-500/30 bg-indigo-500/5' : 'text-zinc-500 hover:text-white hover:bg-white/10'}`}
+                            className={`w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.05] transition-all ${hasSaved ? 'text-indigo-400 border-indigo-500/30 bg-indigo-500/5' : 'text-zinc-500 hover:text-white hover:bg-white/10'}`}
                         >
                             <BookmarkPlus className={`w-5 h-5 ${hasSaved ? 'fill-indigo-400' : ''}`} />
                         </Button>
@@ -328,28 +372,65 @@ export default function IdeaDetailPage() {
                                 navigator.clipboard.writeText(window.location.href);
                                 alert("Refinement link captured.");
                             }}
-                            className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-zinc-500 hover:text-white transition-all hover:bg-white/10"
+                            className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.05] text-zinc-500 hover:text-white transition-all hover:bg-white/10"
                         >
                             <Share2 className="w-5 h-5" />
                         </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={async () => {
-                                if (!user) { router.push('/login'); return; }
-                                const { getOrCreateChat } = await import("@/lib/messaging");
-                                const chatId = await getOrCreateChat(user.uid, ideaData.userId);
-                                router.push(`/messages/${chatId}`);
-                            }}
-                            className="w-12 h-12 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
-                        >
-                            <MessageSquare className="w-5 h-5" />
-                        </Button>
+                        {isInvestorRole && !isOwner ? (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={async () => {
+                                    if (!user) { router.push('/login'); return; }
+                                    if (matchedStatus === 'none') {
+                                        await handleRequestMatch();
+                                    } else if (matchedStatus === 'approved') {
+                                        const { getOrCreateChat } = await import("@/lib/messaging");
+                                        const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                        router.push(`/messages/${chatId}`);
+                                    }
+                                }}
+                                disabled={matchedStatus === 'pending' || requestingMatch}
+                                className={`w-12 h-12 rounded-xl transition-all shadow-lg ${
+                                    matchedStatus === 'approved' ? 'bg-indigo-500/5 border border-indigo-500/10 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-400 shadow-indigo-500/5' :
+                                    matchedStatus === 'pending' ? 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed' :
+                                    'bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300'
+                                }`}
+                                title={
+                                    matchedStatus === 'approved' ? 'Message Architect (Matched)' :
+                                    matchedStatus === 'pending' ? 'Match Request Pending' :
+                                    'Like & Request Connection'
+                                }
+                            >
+                                {matchedStatus === 'approved' ? (
+                                    <MessageSquare className="w-5 h-5" />
+                                ) : matchedStatus === 'pending' ? (
+                                    <Sparkles className="w-5 h-5 animate-pulse" />
+                                ) : (
+                                    <Heart className="w-5 h-5 fill-pink-500/20" />
+                                )}
+                            </Button>
+                        ) : (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={async () => {
+                                    if (!user) { router.push('/login'); return; }
+                                    const { getOrCreateChat } = await import("@/lib/messaging");
+                                    const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                    router.push(`/messages/${chatId}`);
+                                }}
+                                className="w-12 h-12 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-indigo-400/50 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 shadow-lg shadow-indigo-500/5"
+                                title="Message Architect"
+                            >
+                                <MessageSquare className="w-5 h-5" />
+                            </Button>
+                        )}
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => setShowReport(true)}
-                            className="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 text-red-400/50 hover:text-red-400 transition-all hover:bg-red-500/10"
+                            className="w-12 h-12 rounded-xl bg-red-500/5 border border-red-500/10 text-red-400/50 hover:text-red-400 transition-all hover:bg-red-500/10"
                         >
                             <Flag className="w-5 h-5" />
                         </Button>
@@ -359,19 +440,19 @@ export default function IdeaDetailPage() {
                 {/* ─── Refinement Hub Header ─── */}
                 <div className="space-y-8">
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-[0.2em]">
+                        <div className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-[0.2em]">
                             {ideaData.category}
                         </div>
-                        <div className={`inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black border uppercase tracking-[0.2em] transition-all shadow-lg shadow-black/20 ${getStatusColor(ideaData.executionStatus)}`}>
+                        <div className={`inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black border uppercase tracking-[0.2em] transition-all shadow-lg shadow-black/20 ${getStatusColor(ideaData.executionStatus)}`}>
                             <span className="w-2 h-2 rounded-full bg-current mr-2 animate-pulse" />
                             {ideaData.executionStatus || 'Analyzing'}
                         </div>
-                        <div className="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black bg-white/[0.02] text-zinc-500 border border-white/[0.05] uppercase tracking-[0.2em]">
+                        <div className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-white/[0.02] text-zinc-500 border border-white/[0.05] uppercase tracking-[0.2em]">
                             Version v{ideaData.currentVersion || 1}
                         </div>
                         
                         {/* Visibility Badge */}
-                        <div className={`inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black border uppercase tracking-[0.2em] shadow-lg shadow-black/20 ${
+                        <div className={`inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black border uppercase tracking-[0.2em] shadow-lg shadow-black/20 ${
                             ideaData.visibility === 'public' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
                             ideaData.visibility === 'restricted' ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' :
                             'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
@@ -379,6 +460,13 @@ export default function IdeaDetailPage() {
                             {ideaData.visibility === 'public' ? <Eye className="w-3 h-3 mr-2" /> : <Lock className="w-3 h-3 mr-2" />}
                             {ideaData.visibility === 'public' ? 'Public Domain' : ideaData.visibility === 'restricted' ? 'Restricted Access' : 'Investor Verified'}
                         </div>
+
+                        {/* Sector hashtags */}
+                        {ideaData.tags && ideaData.tags.map(tag => (
+                            <div key={tag} className="inline-flex items-center px-4 py-2 rounded-lg text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-[0.2em] shadow-lg shadow-blue-500/5">
+                                #{tag}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="space-y-4">
@@ -390,7 +478,7 @@ export default function IdeaDetailPage() {
                                 onClick={() => router.push(`/user/${ideaData.authorUsername}`)}
                                 className="group flex items-center gap-3"
                             >
-                                <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-indigo-500/50 transition-all shadow-xl">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-indigo-500/50 transition-all shadow-xl">
                                     <span className="text-zinc-500 group-hover:text-indigo-400 uppercase text-[10px] font-black">
                                         {ideaData.authorUsername?.[0].toUpperCase() || 'U'}
                                     </span>
@@ -414,11 +502,11 @@ export default function IdeaDetailPage() {
                 {/* ─── The Hybrid Layer: Problems & Standalone ─── */}
                 {linkedProblem && (
                     <div className="group relative">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-[40px] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
-                        <div className="relative p-8 rounded-[32px] bg-purple-500/[0.03] border border-purple-500/10 backdrop-blur-3xl space-y-4">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-2xl blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+                        <div className="relative p-8 rounded-xl bg-purple-500/[0.03] border border-purple-500/10 backdrop-blur-3xl space-y-4">
                             <header className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
                                         <span className="text-purple-400 text-xs text-center font-black leading-none uppercase">!</span>
                                     </div>
                                     <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.3em]">Parent Problem Statement</p>
@@ -442,12 +530,12 @@ export default function IdeaDetailPage() {
                                 <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Current Snapshot</h3>
                                 <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">v{ideaData.currentVersion || 1} ACTIVE</span>
                             </div>
-                            <div className="p-8 sm:p-12 rounded-[40px] bg-[#0a0a0c] border border-white/[0.04] shadow-2xl relative overflow-hidden group">
+                            <div className="p-8 sm:p-12 rounded-2xl bg-[#0a0a0c] border border-white/[0.04] shadow-2xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
                                 
                                 {!accessGranted ? (
                                     <div className="relative z-10 flex flex-col items-center justify-center py-20 text-center space-y-6">
-                                        <div className="w-16 h-16 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                                        <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                                             <Lock className="w-8 h-8 text-orange-400" />
                                         </div>
                                         <div className="space-y-2">
@@ -509,7 +597,7 @@ export default function IdeaDetailPage() {
                                                     {v.timestamp?.toDate ? v.timestamp.toDate().toLocaleDateString() : 'Snapshot'}
                                                 </span>
                                             </div>
-                                            <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/[0.05] group-hover:border-white/10 transition-all">
+                                            <div className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.05] group-hover:border-white/10 transition-all">
                                                 <h4 className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2">Changelog</h4>
                                                 <p className="text-sm text-zinc-400 font-medium leading-relaxed italic">&ldquo;{v.changelog}&rdquo;</p>
                                                 
@@ -526,7 +614,7 @@ export default function IdeaDetailPage() {
                                     <div className="absolute -left-[45px] top-1.5 w-12 h-12 flex items-center justify-center">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
                                     </div>
-                                    <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-2xl flex items-center justify-center">
+                                    <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-center">
                                         <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em]">Future Evolution Pending...</span>
                                     </div>
                                 </div>
@@ -538,7 +626,7 @@ export default function IdeaDetailPage() {
                     <div className="space-y-8 sticky top-24 h-fit pb-12">
                         
                         {/* Interaction Hub */}
-                        <div className="p-8 rounded-[40px] bg-[#0a0a0c] border border-white/[0.04] shadow-2xl space-y-8">
+                        <div className="p-8 rounded-2xl bg-[#0a0a0c] border border-white/[0.04] shadow-2xl space-y-8">
                             
                             {/* Execution Panel */}
                             {isOwner ? (
@@ -546,7 +634,7 @@ export default function IdeaDetailPage() {
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-40">Architect Controls</h3>
                                         <Button 
-                                            className="w-full h-14 bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] transition-transform"
+                                            className="w-full h-14 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-indigo-500/20 hover:scale-[1.02] transition-transform"
                                             onClick={() => setShowRefine(true)}
                                         >
                                             <Sparkles className="w-4 h-4 mr-2" />
@@ -554,7 +642,7 @@ export default function IdeaDetailPage() {
                                         </Button>
                                         <Button 
                                             variant="outline"
-                                            className="w-full h-12 bg-white/[0.03] border-white/10 text-zinc-400 rounded-2xl font-bold text-xs hover:text-white"
+                                            className="w-full h-12 bg-white/[0.03] border-white/10 text-zinc-400 rounded-xl font-bold text-xs hover:text-white"
                                             onClick={() => alert("Execution status updating is locked in this phase.")}
                                         >
                                             Shift Status to Building
@@ -576,7 +664,7 @@ export default function IdeaDetailPage() {
                                     <Button 
                                         onClick={handleJoinRequest}
                                         disabled={joinStatus !== 'none' || isJoining}
-                                        className={`w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-transform hover:scale-[1.02] ${
+                                        className={`w-full h-14 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-transform hover:scale-[1.02] ${
                                             joinStatus === 'approved' ? 'bg-green-500 text-white' : 
                                             joinStatus === 'pending' ? 'bg-zinc-800 text-zinc-500' : 
                                             'bg-white text-black hover:bg-zinc-200'
@@ -588,21 +676,47 @@ export default function IdeaDetailPage() {
                                          'Request to join team'}
                                     </Button>
                                     
-                                    <Button 
-                                        onClick={async () => {
-                                            if (!user) { router.push('/login'); return; }
-                                            const { getOrCreateChat } = await import("@/lib/messaging");
-                                            const chatId = await getOrCreateChat(user.uid, ideaData.userId);
-                                            router.push(`/messages/${chatId}`);
-                                        }}
-                                        variant="ghost" 
-                                        className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-2xl"
-                                    >
-                                        Message Architect
-                                    </Button>
+                                    {isInvestorRole && !isOwner ? (
+                                        <Button 
+                                            onClick={async () => {
+                                                if (matchedStatus === 'none') {
+                                                    await handleRequestMatch();
+                                                } else if (matchedStatus === 'approved') {
+                                                    if (!user) { router.push('/login'); return; }
+                                                    const { getOrCreateChat } = await import("@/lib/messaging");
+                                                    const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                                    router.push(`/messages/${chatId}`);
+                                                }
+                                            }}
+                                            disabled={matchedStatus === 'pending' || requestingMatch}
+                                            className={`w-full h-12 font-bold text-xs rounded-xl transition-all ${
+                                                matchedStatus === 'approved' ? 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 border border-white/5' :
+                                                matchedStatus === 'pending' ? 'bg-zinc-800 text-zinc-500 border border-white/5 cursor-not-allowed' :
+                                                'bg-pink-600 hover:bg-pink-700 text-white shadow-xl shadow-pink-500/20'
+                                            }`}
+                                        >
+                                            {requestingMatch ? 'transmitting...' :
+                                             matchedStatus === 'approved' ? 'Message Architect (Matched)' :
+                                             matchedStatus === 'pending' ? 'Match Request Pending' :
+                                             'Like & Request Connection'}
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            onClick={async () => {
+                                                if (!user) { router.push('/login'); return; }
+                                                const { getOrCreateChat } = await import("@/lib/messaging");
+                                                const chatId = await getOrCreateChat(user.uid, ideaData.userId);
+                                                router.push(`/messages/${chatId}`);
+                                            }}
+                                            variant="ghost" 
+                                            className="w-full h-12 bg-white/[0.03] hover:bg-white/[0.08] text-zinc-400 font-bold text-xs rounded-xl"
+                                        >
+                                            Message Architect
+                                        </Button>
+                                    )}
                                     
                                     {joinStatus === 'approved' && (
-                                        <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-2xl">
+                                        <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-xl">
                                             <p className="text-[9px] font-black text-green-400 uppercase tracking-widest mb-1">Status: Operational</p>
                                             <p className="text-xs text-zinc-500 leading-relaxed font-medium">You have been granted architectural access. Sync with the founder to begin execution.</p>
                                         </div>
@@ -618,10 +732,10 @@ export default function IdeaDetailPage() {
                                         href={ideaData.githubUrl} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] transition-all group"
+                                        className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.08] transition-all group"
                                     >
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center border border-white/[0.05] group-hover:border-indigo-400/30 transition-colors">
+                                            <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center border border-white/[0.05] group-hover:border-indigo-400/30 transition-colors">
                                                 <Github className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400" />
                                             </div>
                                             <div>
@@ -637,11 +751,11 @@ export default function IdeaDetailPage() {
                             <div className="pt-4 border-t border-white/[0.04] space-y-4">
                                 <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Asset Intelligence</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-2xl text-center">
+                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-center">
                                         <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Authority</p>
                                         <p className="text-xs font-bold text-white">{ (ideaData.views || 0) > 100 ? 'Tier 1' : 'Seed' }</p>
                                     </div>
-                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-2xl text-center">
+                                    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-center">
                                         <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Signal</p>
                                         <p className="text-xs font-bold text-indigo-400">High</p>
                                     </div>
@@ -650,7 +764,7 @@ export default function IdeaDetailPage() {
                         </div>
 
                         {/* Network Insights */}
-                        <div className="p-6 rounded-[32px] bg-indigo-500/5 border border-indigo-500/10">
+                        <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
                             <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">Network Activity</h4>
                             <div className="flex items-center gap-3">
                                 <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">

@@ -175,41 +175,43 @@ export default function QuestionItem({ question }: { question: Question }) {
         <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 sm:p-8 bg-[#0a0a0c] border border-white/[0.04] shadow-xl rounded-[24px] space-y-6 hover:border-white/10 transition-colors"
+            className="p-6 sm:p-8 bg-black border border-white/10 shadow-none space-y-6 hover:border-white/20 transition-colors font-mono"
         >
             <div className="flex flex-col space-y-4">
                 {/* Header: Avatar, Name, Time */}
                 <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 rounded-full shadow-inner" style={{ background: generateAvatarGradient(question.userId) }} />
+                    <div className="w-10 h-10 rounded-none border border-white/10 bg-white/5 font-mono flex items-center justify-center text-white text-xs shrink-0 select-none uppercase font-bold">
+                        {question.userId.substring(0, 2)}
+                    </div>
                     <div className="flex flex-col">
                         <div className="flex items-center space-x-2">
-                            <span className="text-zinc-200 font-bold text-sm">Builder {question.userId.substring(0,4)}</span>
+                            <span className="text-zinc-200 font-bold text-xs uppercase">Builder {question.userId.substring(0,4)}</span>
                             <span className="text-zinc-600 text-xs">•</span>
-                            <span className="text-zinc-500 text-xs font-medium">{formatTimeAgo(question.createdAt)}</span>
+                            <span className="text-zinc-500 text-[10px] font-medium uppercase tracking-wider">{formatTimeAgo(question.createdAt)}</span>
                         </div>
-                        <span className="self-start px-2 py-0.5 mt-1 rounded-md text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-zinc-400 border border-white/[0.05]">
+                        <span className="self-start px-2 py-0.5 mt-1 rounded-none text-[8px] font-bold uppercase tracking-widest bg-white/5 text-zinc-400 border border-white/10">
                             {question.category}
                         </span>
                     </div>
                 </div>
 
-                <p className="text-white text-xl font-bold leading-relaxed">{question.question}</p>
+                <p className="text-white text-xl font-bold leading-relaxed font-dot uppercase tracking-wider">{question.question}</p>
 
                 <div className="flex items-center space-x-4 pt-2">
                     <motion.button
-                        whileTap={{ scale: 0.9 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleUpvoteQuestion}
-                        className="flex items-center text-zinc-400 hover:text-white bg-white/[0.02] hover:bg-white/[0.05] px-4 h-10 rounded-lg transition-colors border border-transparent hover:border-white/10"
+                        className="flex items-center text-zinc-400 hover:text-black bg-transparent hover:bg-white px-4 h-9 rounded-none border border-white/10 hover:border-white transition-colors text-[9px] uppercase tracking-wider font-bold"
                     >
-                        <ThumbsUp className="w-4 h-4 mr-2" />
-                        <span className="font-semibold">{question.upvotes || 0}</span>
+                        <ThumbsUp className="w-3.5 h-3.5 mr-2" />
+                        <span>{question.upvotes || 0}</span>
                     </motion.button>
                     <Button
                         onClick={() => setIsReplying(!isReplying)}
                         variant="ghost"
-                        className={`text-zinc-400 hover:text-white rounded-lg h-10 px-5 transition-colors ${isReplying ? 'bg-white/10 text-white' : 'bg-white/[0.02] hover:bg-white/[0.08]'}`}
+                        className={`text-zinc-400 hover:text-white rounded-none h-9 px-4 transition-colors font-mono text-[9px] uppercase tracking-wider font-bold border border-white/10 hover:bg-white hover:text-black hover:border-white ${isReplying ? 'bg-white text-black border-white' : 'bg-transparent'}`}
                     >
-                        <MessageCircle className="w-4 h-4 mr-2" />
+                        <MessageCircle className="w-3.5 h-3.5 mr-2" />
                         {answers.length} {answers.length === 1 ? 'Answer' : 'Answers'}
                     </Button>
                 </div>
@@ -217,7 +219,7 @@ export default function QuestionItem({ question }: { question: Question }) {
 
             {/* Answers Thread with Vertical Thread Line */}
             {answers.length > 0 && (
-                <div className="pt-2 mt-2 space-y-6 relative before:absolute before:inset-y-0 before:left-[19px] sm:before:left-[19px] before:-top-6 before:w-[2px] before:bg-white/[0.05]">
+                <div className="pt-2 mt-2 space-y-6 relative before:absolute before:inset-y-0 before:left-[19px] sm:before:left-[19px] before:-top-6 before:w-[1px] before:bg-white/10">
                     <AnimatePresence>
                     {answers.map(ans => (
                         <motion.div 
@@ -227,29 +229,29 @@ export default function QuestionItem({ question }: { question: Question }) {
                             className="flex space-x-3 relative z-10"
                         >
                             {/* Answer Avatar */}
-                            <div className="w-10 h-10 rounded-full shrink-0 shadow-inner border-[4px] border-[#0a0a0c]" style={{ background: generateAvatarGradient(ans.userId) }} />
+                            <div className="w-10 h-10 rounded-none border border-white/10 bg-white/5 font-mono flex items-center justify-center text-white text-xs shrink-0 select-none uppercase font-bold">{ans.userId.substring(0, 2)}</div>
                             
-                            <div className="space-y-2 w-full pt-1 bg-white/[0.02] p-5 rounded-2xl rounded-tl-lg border border-white/[0.02]">
+                            <div className="space-y-2 w-full pt-1 bg-white/5 p-5 rounded-none border border-white/10">
                                 <div className="flex items-center space-x-2 mb-2">
-                                    <span className="text-zinc-300 font-bold text-sm">Builder {ans.userId.substring(0,4)}</span>
+                                    <span className="text-zinc-300 font-bold text-xs uppercase">Builder {ans.userId.substring(0,4)}</span>
                                     <span className="text-zinc-600 text-xs">•</span>
-                                    <span className="text-zinc-500 text-xs font-medium">{formatTimeAgo(ans.createdAt)}</span>
+                                    <span className="text-zinc-500 text-[10px] font-medium uppercase tracking-wider">{formatTimeAgo(ans.createdAt)}</span>
                                 </div>
                                 
-                                {ans.text && <p className="text-zinc-300 text-base leading-relaxed">{ans.text}</p>}
+                                {ans.text && <p className="text-zinc-300 text-sm leading-relaxed font-mono">{ans.text}</p>}
                                 {ans.imageUrl && (
-                                    <div className="mt-3 rounded-2xl overflow-hidden border border-white/[0.08] inline-block max-w-full shadow-lg">
+                                    <div className="mt-3 rounded-none overflow-hidden border border-white/10 inline-block max-w-full shadow-lg">
                                         <img src={ans.imageUrl} alt="Answer attachment" className="max-h-[300px] object-contain bg-black/50" />
                                     </div>
                                 )}
                                 <div className="pt-3">
                                     <motion.button
-                                        whileTap={{ scale: 0.9 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={() => handleUpvoteAnswer(ans.id)}
-                                        className="flex items-center text-xs text-zinc-500 hover:text-white transition-colors"
+                                        className="flex items-center text-[9px] font-bold uppercase tracking-wider text-zinc-500 hover:text-white transition-colors"
                                     >
                                         <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />
-                                        <span className="font-semibold">{ans.upvotes || 0}</span>
+                                        <span>{ans.upvotes || 0}</span>
                                     </motion.button>
                                 </div>
                             </div>
@@ -264,25 +266,27 @@ export default function QuestionItem({ question }: { question: Question }) {
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="pt-6 border-t border-white/[0.04] space-y-4"
+                    className="pt-6 border-t border-white/10 space-y-4"
                 >
                     <div className="flex items-start space-x-3">
-                        <div className="w-10 h-10 rounded-full shrink-0 shadow-inner" style={{ background: generateAvatarGradient(user.uid) }} />
+                        <div className="w-10 h-10 rounded-none border border-white/10 bg-white/5 font-mono flex items-center justify-center text-white text-xs shrink-0 select-none uppercase font-bold">
+                            {user.uid.substring(0, 2)}
+                        </div>
                         <div className="w-full space-y-4">
                             <Textarea
                                 placeholder="Post your answer..."
                                 value={newAnswer}
                                 onChange={(e) => setNewAnswer(e.target.value)}
-                                className="min-h-[100px] bg-white/[0.02] border border-white/[0.05] text-zinc-200 focus-visible:ring-1 focus-visible:ring-white/20 rounded-xl p-4 text-sm resize-none"
+                                className="min-h-[100px] bg-transparent border border-white/10 text-zinc-200 focus-visible:ring-0 focus-visible:border-white rounded-none p-4 font-mono text-xs resize-none placeholder:text-zinc-700"
                             />
 
                             {imagePreview && (
-                                <div className="relative inline-block mt-3">
-                                    <img src={imagePreview} alt="Preview" className="max-h-40 rounded-xl border border-white/10 shadow-lg" />
+                                <div className="relative inline-block mt-3 rounded-none border border-white/10 overflow-hidden shadow-lg">
+                                    <img src={imagePreview} alt="Preview" className="max-h-40 bg-black/50" />
                                     <Button
                                         size="icon"
                                         variant="destructive"
-                                        className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-lg border-2 border-[#0a0a0c]"
+                                        className="absolute -top-3 -right-3 w-8 h-8 rounded-none border border-white/10 bg-black hover:bg-white hover:text-black"
                                         onClick={clearImage}
                                     >
                                         <X className="w-4 h-4" />
@@ -290,7 +294,7 @@ export default function QuestionItem({ question }: { question: Question }) {
                                 </div>
                             )}
 
-                            {error && <p className="text-red-400 text-sm font-medium bg-red-500/10 px-4 py-2 rounded-lg">{error}</p>}
+                            {error && <p className="text-red-500 text-[10px] font-mono uppercase tracking-wider bg-black border border-red-500/30 px-4 py-2 rounded-none">{error}</p>}
 
                             <div className="flex items-center justify-between pt-2">
                                 <div>
@@ -303,24 +307,24 @@ export default function QuestionItem({ question }: { question: Question }) {
                                     />
                                     <Button
                                         variant="outline"
-                                        className="bg-white/[0.03] border-white/10 text-zinc-300 hover:text-white rounded-full hover:bg-white/[0.08]"
+                                        className="bg-transparent border border-white/10 text-zinc-300 hover:text-black hover:bg-white rounded-none px-4 h-9 font-mono text-[9px] uppercase tracking-wider font-bold transition-all"
                                         onClick={() => document.getElementById(`file-${question.id}`)?.click()}
                                     >
-                                        <ImageIcon className="w-4 h-4 mr-2" />
+                                        <ImageIcon className="w-3.5 h-3.5 mr-2" />
                                         Attach Image
                                     </Button>
                                 </div>
 
                                 <div className="flex space-x-3">
-                                    <Button onClick={() => setIsReplying(false)} variant="ghost" className="text-zinc-400 hover:text-white rounded-lg">
+                                    <Button onClick={() => setIsReplying(false)} variant="ghost" className="text-zinc-500 hover:text-white font-mono text-[9px] uppercase tracking-wider rounded-none h-9 px-4 hover:bg-white/5">
                                         Cancel
                                     </Button>
                                     <Button
                                         onClick={handlePostAnswer}
                                         disabled={submitting || (!newAnswer.trim() && !imageFile)}
-                                        className="bg-white hover:bg-zinc-200 text-black rounded-lg px-8 font-bold shadow-md"
+                                        className="bg-white hover:bg-black hover:text-white text-black border border-white rounded-none px-6 h-9 font-mono text-[9px] uppercase tracking-widest font-bold transition-all"
                                     >
-                                        {submitting ? "Posting..." : "Post"}
+                                        {submitting ? "Posting..." : "Post Answer"}
                                     </Button>
                                 </div>
                             </div>
@@ -330,8 +334,8 @@ export default function QuestionItem({ question }: { question: Question }) {
             )}
 
             {isReplying && !user && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 border-t border-white/[0.04] text-center">
-                    <p className="text-zinc-400">Log in to post an answer.</p>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 border-t border-white/10 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                    <p>Log in to post an answer.</p>
                 </motion.div>
             )}
         </motion.div>
